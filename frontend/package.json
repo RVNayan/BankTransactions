@@ -1,0 +1,26 @@
+{
+    "name": "your-project-name",
+    "version": "1.0.0",
+    "description": "A Vue.js project with Vuetify and gRPC integration",
+    "main": "main.js",
+    "scripts": {
+        "serve": "vue-cli-service serve",
+        "build": "vue-cli-service build",
+        "lint": "vue-cli-service lint"
+    },
+    "dependencies": {
+        "axios": "^1.7.7",
+        "grpc-web": "^1.2.1",
+        "vue": "^3.0.0",
+        "vuetify": "^3.0.0"
+    },
+    "devDependencies": {
+        "@vue/cli-service": "^5.0.8",
+        "@vue/compiler-sfc": "^3.0.0"
+    },
+    "browserslist": [
+        "> 1%",
+        "last 2 versions",
+        "not dead"
+    ]
+}

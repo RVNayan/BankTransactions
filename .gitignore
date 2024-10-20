@@ -1,0 +1,7 @@
+# Node modules
+frontend/node_modules/
+
+# Environment variables
+.env
+backend/client_secret.json
+backend/service_acc.json
