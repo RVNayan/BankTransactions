@@ -99,13 +99,11 @@ def store_sender_name(original_name, updated_name):
                 (original_name, original_name, original_name)
             )
 
-        # Commit the changes
         conn.commit()
     except Exception as e:
         print(f"An error occurred while storing sender name: {e}")
 
     finally:
-            # Close the database connection
             cursor.close()
             conn.close()
 
@@ -295,9 +293,9 @@ def fetch_emails():
     target_sender = sender_id
     filtered_messages = []
 
-    # Calculate the date range for the past week
+    # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=2)
+    past_week = now - timedelta(days=30)
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -370,7 +368,7 @@ def fetch_sender_name(original_name):
         conn.close()
 
 
-def reset_sender_name(original_name):
+def reset_sender_name(name):
     try:
         # Connect to the PostgreSQL database
         conn = psycopg2.connect(
@@ -382,17 +380,12 @@ def reset_sender_name(original_name):
         cursor = conn.cursor()
 
         # Fetch current updated name and previous name
-        cursor.execute("SELECT updated_name, previous_name FROM sender_names WHERE original_name = %s", (original_name,))
+        cursor.execute("SELECT original_name FROM sender_names WHERE previous_name = %s", (name,))
         result = cursor.fetchone()
 
         if result:
-            current_updated_name, previous_name = result
-            if previous_name is not None:
-                # Reset updated_name to previous_name
-                cursor.execute("UPDATE sender_names SET updated_name = %s, previous_name = %s WHERE original_name = %s", 
-                               (previous_name, current_updated_name, original_name))
-            else:
-                print("No previous name to revert to.")
+                cursor.execute("UPDATE sender_names SET updated_name = %s WHERE original_name = %s",(name, name))
+    
         else:
             print("Original name not found in the database.")
 
@@ -408,7 +401,33 @@ def reset_sender_name(original_name):
         conn.close()
 
 
+def getoriginal(updated_name):
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword"  # Replace with your actual password
+        )
+        cursor = conn.cursor()
 
+        # Check if the original name exists in the database
+        cursor.execute("SELECT original_name FROM sender_names WHERE updated_name = %s", (updated_name,))
+        result = cursor.fetchone()
+
+        
+        return result
+
+    except Exception as e:
+        print(f"An error occurred while fetching sender name: {e}")
+        return updated_name  # Return original name in case of error
+
+    finally:
+        # Close the database connection
+        cursor.close()
+        conn.close()
+    
 @app.route('/update_name', methods=['POST'])
 def update_name():
     data = flask.request.json
@@ -438,6 +457,30 @@ def update_name():
         cursor.close()
         conn.close()
 
+@app.route('/reset_name', methods=['POST'])
+def reset_name():
+    data = flask.request.json
+    # name = data['originalName']
+    name = data['name']  # Assuming you may want to use this later
+    print(type)
+    try:
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword"
+        )
+        cursor = conn.cursor()
+        reset_sender_name(getoriginal(name)) 
+
+        return flask.jsonify({'success': True})
+
+    except Exception as e:
+        return flask.jsonify({'success': False, 'error': str(e)})
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 if __name__ == '__main__':

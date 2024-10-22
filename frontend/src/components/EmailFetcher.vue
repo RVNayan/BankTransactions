@@ -153,34 +153,49 @@ export default {
       // No need to reset editingName[index] since it's already bound to the v-text-field
     },
     async resetName(index, column) {
-      const originalName = this.messages[index][column];
-      try {
-        const response = await fetch('http://localhost:8080/reset_name', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ originalName, newName: originalName, type: column }),
-        });
+  // Read the current name from the messages array
+  const currentName = this.messages[index][column]; // Get the current name from the cell
+  try {
+    const response = await fetch('http://localhost:8080/reset_name', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({name: column }), // Send current name as originalName
+    });
 
-        const result = await response.json();
-        if (result.success) {
-          // Update the displayed name to original name
-          this.messages[index][column] = originalName; // Restore original name
-          this.editingName[index] = originalName; // Reset the editing name to original
-        } else {
-          this.dialogMessage = result.error || 'Error resetting name';
-          this.dialog = true;
-        }
-      } catch (error) {
-        this.dialogMessage = 'Error resetting name: ' + error.message;
-        this.dialog = true;
+    // Check if the response is OK
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const result = await response.json();
+    if (result.success) {
+      // Update the displayed name to original name
+      this.messages[index][column] = currentName; // Restore original name
+      this.editingName[index] = currentName; // Reset the editing name to original
+
+      // Optionally, you could also reset the editing index if you are in editing mode
+      if (this.editingIndex === index) {
+        this.stopEditing(); // Stop editing if applicable
       }
-    },
-  },
-  mounted() {
-    this.checkAuthorization();
-  },
+    } else {
+      // Show the error message in the dialog
+      this.dialogMessage = result.error || 'Error resetting name';
+      this.dialog = true;
+    }
+  } catch (error) {
+    // Handle any error that occurs during fetch or response processing
+    this.dialogMessage = 'Error resetting name: ' + error.message;
+    this.dialog = true;
+  }
+},
+
+},
+
+mounted() {
+  this.checkAuthorization();
+}, 
 };
 </script>
 
