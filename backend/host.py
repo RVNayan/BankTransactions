@@ -37,7 +37,41 @@ app.secret_key = os.getenv('SECRET_KEY')
 STORE_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
 
-def store_credentials_in_db(user_id, credentials):
+# def store_credentials_in_db(user_id, credentials):
+#     try:
+#         # Connect to the PostgreSQL database
+#         conn = psycopg2.connect(
+#             host="localhost",
+#             database="webpay",
+#             user="webpayuser",
+#             password="yourpassword"  # Replace with your actual password
+#         )
+#         cursor = conn.cursor()
+
+#         # Prepare SQL query to insert credentials
+#         query = """
+#         INSERT INTO user_credentials (user_id, access_token, refresh_token, expires_at)
+#         VALUES (%s, %s, %s, %s);
+#         """
+        
+#         # Calculate expiration time (assuming expires_in is in seconds)
+#         expires_at = datetime.now()
+
+#         # Execute the query
+#         cursor.execute(query, (user_id, credentials.token, credentials.refresh_token, expires_at))
+        
+#         # Commit the changes
+#         conn.commit()
+
+#     except Exception as e:
+#         print(f"An error occurred while storing credentials: {e}")
+    
+#     finally:
+#         # Close the database connection
+#         cursor.close()
+#         conn.close()
+
+def store_sender_name(original_name, updated_name):
     try:
         # Connect to the PostgreSQL database
         conn = psycopg2.connect(
@@ -48,29 +82,33 @@ def store_credentials_in_db(user_id, credentials):
         )
         cursor = conn.cursor()
 
-        # Prepare SQL query to insert credentials
-        query = """
-        INSERT INTO user_credentials (user_id, access_token, refresh_token, expires_at)
-        VALUES (%s, %s, %s, %s);
-        """
-        
-        # Calculate expiration time (assuming expires_in is in seconds)
-        expires_at = datetime.now()
+        cursor.execute("SELECT * FROM sender_names WHERE updated_name = %s", (original_name,))
+        existing_name = cursor.fetchone()
 
-        # Execute the query
-        cursor.execute(query, (user_id, credentials.token, credentials.refresh_token, expires_at))
-        
+        if existing_name:
+            if existing_name[1] != updated_name:  
+                cursor.execute(
+                    "UPDATE sender_names SET updated_name = %s WHERE previous_name = %s",
+                    (updated_name, existing_name[1])         
+                )
+            
+        else:
+            # If it doesn't exist, insert it with the updated_name same as original_name
+            cursor.execute(
+                "INSERT INTO sender_names (original_name, updated_name, previous_name) VALUES (%s, %s, %s)",
+                (original_name, original_name, original_name)
+            )
+
         # Commit the changes
         conn.commit()
-
     except Exception as e:
-        print(f"An error occurred while storing credentials: {e}")
-    
+        print(f"An error occurred while storing sender name: {e}")
+
     finally:
-        # Close the database connection
-        cursor.close()
-        conn.close()
-    
+            # Close the database connection
+            cursor.close()
+            conn.close()
+
 @app.route('/')
 def index():
     return print_index_table()
@@ -180,9 +218,9 @@ def oauth2callback():
     credentials = flow.credentials
     flask.session['credentials'] = credentials_to_dict(credentials)
 
-    user_id = credentials.client_id  
-    store_credentials_in_db(user_id, credentials)
-    print("Token: ",credentials.client_id)
+    # user_id = credentials.client_id  
+    # store_credentials_in_db(user_id, credentials) #push to database
+    # print("Token: ",credentials.client_id)
 
     return flask.redirect('http://localhost:8081/')
 
@@ -286,17 +324,119 @@ def fetch_emails():
             
             DAT = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
             data = extracter(full_message + DAT)
-            unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": data[2], "Time": data[3], "IsDebited": data[4]}
+
+            # Check the database for the sender name
+            updated_name = fetch_sender_name(data[2])  # Fetch the updated name
+            unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": updated_name, "Time": data[3], "IsDebited": data[4]}
             filtered_messages.append(unitdata)  # Use the index to create unique keys
 
+            store_sender_name(data[2], updated_name)  # Store the sender name in the database
+            
             # Write data to Google Sheets
-            print(filtered_messages)
             # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
 
     flask.session['credentials'] = credentials_to_dict(credentials)
-    return flask.jsonify({'messages' :filtered_messages})
+    return flask.jsonify({'messages': filtered_messages})
+
+def fetch_sender_name(original_name):
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword"  # Replace with your actual password
+        )
+        cursor = conn.cursor()
+
+        # Check if the original name exists in the database
+        cursor.execute("SELECT updated_name FROM sender_names WHERE previous_name = %s", (original_name,))
+        result = cursor.fetchone()
+
+        if result is not None:
+            # If the name exists, fetch the updated name
+            updated_name = result[0]  
+            return updated_name # Return updated name or original if null
+        else:
+            return original_name  # If not found, return original name
+
+    except Exception as e:
+        print(f"An error occurred while fetching sender name: {e}")
+        return original_name  # Return original name in case of error
+
+    finally:
+        # Close the database connection
+        cursor.close()
+        conn.close()
 
 
+def reset_sender_name(original_name):
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword"  # Replace with your actual password
+        )
+        cursor = conn.cursor()
+
+        # Fetch current updated name and previous name
+        cursor.execute("SELECT updated_name, previous_name FROM sender_names WHERE original_name = %s", (original_name,))
+        result = cursor.fetchone()
+
+        if result:
+            current_updated_name, previous_name = result
+            if previous_name is not None:
+                # Reset updated_name to previous_name
+                cursor.execute("UPDATE sender_names SET updated_name = %s, previous_name = %s WHERE original_name = %s", 
+                               (previous_name, current_updated_name, original_name))
+            else:
+                print("No previous name to revert to.")
+        else:
+            print("Original name not found in the database.")
+
+        # Commit the changeshello
+        conn.commit()
+
+    except Exception as e:
+        print(f"An error occurred while resetting sender name: {e}")
+    
+    finally:
+        # Close the database connection
+        cursor.close()
+        conn.close()
+
+
+
+@app.route('/update_name', methods=['POST'])
+def update_name():
+    data = flask.request.json
+    original_name = data['originalName']
+    new_name = data['newName']
+    type = data['type']  # Could be 'sender' or 'receiver'
+
+    try:
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword"
+        )
+        cursor = conn.cursor()
+        
+
+        store_sender_name(original_name, new_name)
+        
+        print(original_name, new_name)
+        return flask.jsonify({'success': True})
+
+    except Exception as e:
+        return flask.jsonify({'success': False, 'error': str(e)})
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 

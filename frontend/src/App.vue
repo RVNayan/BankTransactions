@@ -6,6 +6,8 @@
 
 <script>
 import EmailFetcher from './components/EmailFetcher.vue';
+import 'vuetify/styles';
+import '@mdi/font/css/materialdesignicons.css'; 
 
 export default {
   components: {
