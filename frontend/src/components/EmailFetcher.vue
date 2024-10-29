@@ -27,21 +27,23 @@
               >
                 <td>{{ message['Date of Payment'] }}</td>
                 <td>{{ message['Amount'] }}</td>
-                <td>
-                  <span v-if="editingIndex !== index">{{ message['Receiver'] }}</span>
-                  <v-text-field
-                    v-else
-                    v-model="editingName[index]"
-                    @keyup.enter="saveName(message['Receiver'], index, 'Receiver')"
-                    @blur="stopEditing"
-                    solo
-                    hide-details
-                  />
-                  <v-icon small class="ml-2" @click="editName(index, message['Receiver'])">mdi-pencil</v-icon>
-                  <v-icon small class="ml-2" @click="resetName(index, message['Receiver'])">mdi-eraser</v-icon>
-                </td>
-                <td>{{ message['Time'] }}</td>
-              </tr>
+                <td class="floating-expand">
+                <span v-if="editingIndex !== index">{{ message['Receiver'] }}</span>
+                
+                <v-text-field
+                  v-else
+                  v-model="editingName[index]"
+                  @keyup.enter="saveName(message['Receiver'], index, 'Receiver')"
+                  @blur="stopEditing"
+                  solo
+                  hide-details
+                />
+                <span class="hover-text">hello there</span>
+                <v-icon small class="ml-2" @click="editName(index, message['Receiver'])">mdi-pencil</v-icon>
+                <v-icon small class="ml-2" @click="resetName(index, message['Receiver'])">mdi-eraser</v-icon>
+              </td>
+              <td>{{ message['Time'] }}</td>
+            </tr>
             </tbody>
           </v-table>
 
@@ -79,32 +81,37 @@ export default {
       window.location.href = 'http://localhost:8080/authorize';
     },
     async fetchEmails() {
-      try {
-        const response = await fetch('http://localhost:8080/fetch_emails', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        const data = await response.json();
+  try {
+    const response = await fetch('http://localhost:8080/fetch_emails', {
+      method: 'GET',
+      credentials: 'include',
+    });
+    const data = await response.json();
 
-        if (data.messages) {
-          this.messages = data.messages;
-          // Initialize editingName with the current receiver names
-          this.editingName = this.messages.reduce((acc, message, index) => {
-            acc[index] = message['Receiver']; // Initialize with the original names
-            return acc;
-          }, {});
-        } else if (data.error) {
-          this.dialogMessage = data.error;
-          this.dialog = true;
-        } else {
-          this.dialogMessage = 'Unexpected response structure';
-          this.dialog = true;
-        }
-      } catch (error) {
-        this.dialogMessage = 'Error fetching emails: ' + error.message;
-        this.dialog = true;
-      }
-    },
+    if (data.messages) {
+      this.messages = data.messages;
+      // Initialize editingName with the current receiver names
+      this.editingName = this.messages.reduce((acc, message, index) => {
+        acc[index] = message['Receiver']; // Initialize with the updated names
+        return acc;
+      }, {});
+      this.originalName = this.messages.reduce((acc, message, index) => {
+        acc[index] = message['OriginalName']; // Store original names
+        return acc;
+      }, {});
+    } else if (data.error) {
+      this.dialogMessage = data.error;
+      this.dialog = true;
+    } else {
+      this.dialogMessage = 'Unexpected response structure';
+      this.dialog = true;
+    }
+  } catch (error) {
+    this.dialogMessage = 'Error fetching emails: ' + error.message;
+    this.dialog = true;
+  }
+},
+
     async checkAuthorization() {
       try {
         const response = await fetch('http://localhost:8080/authorized', {
@@ -224,4 +231,38 @@ th {
 .v-icon {
   cursor: pointer;
 }
+
+.floating-expand {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  background-color: #f0f0f0; /* Make sure the cell and hover text match */
+  padding: 8px;
+}
+
+.floating-expand:hover {
+  transform: scale(1.05); /* Slight expansion */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.hover-text {
+  display: none;
+  position: absolute;
+  top: 100%; /* Position above the cell */
+  left: 0;
+  background-color: #f0f0f0; /* Match cell color */
+  padding: 8px;
+  border-radius: 4px;
+  color: #333;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);
+  width: 100%; /* Extend to match cell width */
+  text-align: center;
+}
+
+.floating-expand:hover .hover-text {
+  display: block;
+}
+
+
 </style>

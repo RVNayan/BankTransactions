@@ -295,7 +295,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=30)
+    past_week = now - timedelta(days=7)
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -325,7 +325,7 @@ def fetch_emails():
 
             # Check the database for the sender name
             updated_name = fetch_sender_name(data[2])  # Fetch the updated name
-            unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": updated_name, "Time": data[3], "IsDebited": data[4]}
+            unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": updated_name, "Time": data[3], "IsDebited": data[4], "OriginalName": data[2]}
             filtered_messages.append(unitdata)  # Use the index to create unique keys
 
             store_sender_name(data[2], updated_name)  # Store the sender name in the database
