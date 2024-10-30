@@ -4,15 +4,15 @@ View your complete UPI transaction history with just a single click! This tool p
 
 ![Transaction Viewer Demo](img/Transactions.png)
 
-## Tech Stack
+## Tools
 
 - **Frontend**: Vue.js, Vuetify
 - **Backend**: Flask, Google API (for fetching data from your Google account)
 - **Database**: PostgreSQL for storing and updating transaction data
 
-## 📥 Installation
+## Features
+ 
+ - Get Complete Data of your Past Transactions with the click of a Button
+ - Rename UPI Ids for Easy Recognition
+ - Stats Showing Total Individual Transactions, Frequency of Payments and many more to come...
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/yourusername/OnlineTransactionViewer.git
-   cd OnlineTransactionViewer

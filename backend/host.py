@@ -295,7 +295,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=7)
+    past_week = now - timedelta(days=3)
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -335,6 +335,63 @@ def fetch_emails():
 
     flask.session['credentials'] = credentials_to_dict(credentials)
     return flask.jsonify({'messages': filtered_messages})
+
+
+@app.route('/update_name', methods=['POST'])
+def update_name():
+    data = flask.request.json
+    original_name = data['originalName']
+    new_name = data['newName']
+    type = data['type']  # Could be 'sender' or 'receiver'
+
+    try:
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword"
+        )
+        cursor = conn.cursor()
+        
+
+        store_sender_name(original_name, new_name)
+        
+        print(original_name, new_name)
+        return flask.jsonify({'success': True})
+
+    except Exception as e:
+        return flask.jsonify({'success': False, 'error': str(e)})
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/reset_name', methods=['POST'])
+def reset_name():
+    data = flask.request.json
+    # name = data['originalName']
+    name = data['name']  # Assuming you may want to use this later
+    print(type)
+    try:
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword"
+        )
+        cursor = conn.cursor()
+        reset_sender_name(getoriginal(name)) 
+
+        return flask.jsonify({'success': True})
+
+    except Exception as e:
+        return flask.jsonify({'success': False, 'error': str(e)})
+
+    finally:
+        cursor.close()
+        conn.close()
+
+#Helper Funcs
 
 def fetch_sender_name(original_name):
     try:
@@ -428,61 +485,6 @@ def getoriginal(updated_name):
         cursor.close()
         conn.close()
     
-@app.route('/update_name', methods=['POST'])
-def update_name():
-    data = flask.request.json
-    original_name = data['originalName']
-    new_name = data['newName']
-    type = data['type']  # Could be 'sender' or 'receiver'
-
-    try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="webpay",
-            user="webpayuser",
-            password="yourpassword"
-        )
-        cursor = conn.cursor()
-        
-
-        store_sender_name(original_name, new_name)
-        
-        print(original_name, new_name)
-        return flask.jsonify({'success': True})
-
-    except Exception as e:
-        return flask.jsonify({'success': False, 'error': str(e)})
-
-    finally:
-        cursor.close()
-        conn.close()
-
-@app.route('/reset_name', methods=['POST'])
-def reset_name():
-    data = flask.request.json
-    # name = data['originalName']
-    name = data['name']  # Assuming you may want to use this later
-    print(type)
-    try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="webpay",
-            user="webpayuser",
-            password="yourpassword"
-        )
-        cursor = conn.cursor()
-        reset_sender_name(getoriginal(name)) 
-
-        return flask.jsonify({'success': True})
-
-    except Exception as e:
-        return flask.jsonify({'success': False, 'error': str(e)})
-
-    finally:
-        cursor.close()
-        conn.close()
-
-
 if __name__ == '__main__':
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     app.run('localhost', 8080, debug=True)

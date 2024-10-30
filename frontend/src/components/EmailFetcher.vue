@@ -38,7 +38,7 @@
                   solo
                   hide-details
                 />
-                <span class="hover-text">hello there</span>
+                <span class="hover-text">{{ OriginalNameDisplay[index] }}</span>
                 <v-icon small class="ml-2" @click="editName(index, message['Receiver'])">mdi-pencil</v-icon>
                 <v-icon small class="ml-2" @click="resetName(index, message['Receiver'])">mdi-eraser</v-icon>
               </td>
@@ -74,6 +74,7 @@ export default {
       authorized: false,
       editingIndex: null,
       editingName: {},
+      OriginalNameDisplay: [],
     };
   },
   methods: {
@@ -98,6 +99,10 @@ export default {
       this.originalName = this.messages.reduce((acc, message, index) => {
         acc[index] = message['OriginalName']; // Store original names
         return acc;
+      }, {});
+      this.OriginalNameDisplay = this.messages.reduce((acc, message, index) => {
+          acc[index] = message['OriginalName']; // For OriginalNameDisplay
+          return acc;
       }, {});
     } else if (data.error) {
       this.dialogMessage = data.error;
