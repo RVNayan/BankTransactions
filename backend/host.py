@@ -348,7 +348,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=3)
+    past_week = now - timedelta(days=7)
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week

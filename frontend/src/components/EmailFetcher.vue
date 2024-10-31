@@ -38,11 +38,13 @@
                   solo
                   hide-details
                 />
-                <span class="hover-text">
-                        id: {{ message['OriginalName'] }}<br>
-                        sent: {{ getSentAmount(index) }}<br>
-                        received: {{ getReceivedAmount(index) }}
-                    </span>
+                <div class="hover-container">
+              <span class="hover-text">
+                  ID: {{ message['OriginalName'] }}<br>
+                  Sent: {{ getSentAmount(index) }}<br>
+                  Received: {{ getReceivedAmount(index) }}
+              </span>
+          </div>
                 <v-icon small class="ml-2" @click="editName(index, message['Receiver'])">mdi-pencil</v-icon>
                 <v-icon small class="ml-2" @click="resetName(index, message['Receiver'])">mdi-eraser</v-icon>
               </td>
@@ -94,8 +96,7 @@ export default {
                     credentials: 'include',
                 });
                 const data = await response.json();
-                console.log(data)
-                
+ 
                 this.transactions = data; // Store fetched transactions
 
                 
@@ -288,22 +289,28 @@ th {
 }
 
 .hover-text {
-  display: none;
-  position: absolute;
-  top: 100%; /* Position above the cell */
-  left: 0;
-  background-color: #f0f0f0; /* Match cell color */
-  padding: 8px;
-  border-radius: 4px;
-  color: #333;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);
-  width: 100%; /* Extend to match cell width */
-  text-align: center;
+    position: absolute;  /* Position it relative to the closest positioned ancestor */
+    background-color: black;
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
+    right: 0;             /* Aligns the box to the right */
+    display: none;        /* Initially hidden */
+    z-index: 10;          /* Ensures it appears above other elements */
 }
+
+.hover-container {
+    position: relative;   /* Ensures .hover-text is positioned relative to this container */
+    display: inline-block;
+}
+
+.hover-container:hover .hover-text {
+    display: block; }
 
 .floating-expand:hover .hover-text {
   display: block;
 }
-
 
 </style>
