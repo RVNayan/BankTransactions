@@ -15,6 +15,8 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from datetime import datetime, timedelta
 
+#self functions
+from stats import Total_amount
 
 load_dotenv('../.env')
 CLIENT_SECRETS_FILE = "backend/client_secret.json"
@@ -348,7 +350,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=7)
+    past_week = now - timedelta(days=3)
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -381,7 +383,7 @@ def fetch_emails():
             store_sent_rect(updated_name, data[1], data[4]) # Store the amount Sent/Recieved for the given time duration
             store_sender_name(data[2], updated_name)  # Store the sender name in the database
             
-            
+                   
             unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": updated_name, "Time": data[3], "IsDebited": data[4], "OriginalName": data[2]}
             filtered_messages.append(unitdata)  # Use the index to create unique keys
             # Write data to Google Sheets
@@ -425,7 +427,7 @@ def reset_name():
     data = flask.request.json
     # name = data['originalName']
     name = data['name']  # Assuming you may want to use this later
-    print(type)
+    #print(type)
     try:
         conn = psycopg2.connect(
             host="localhost",
@@ -462,7 +464,6 @@ def fetch_transaction_data():
 
         # Format the data into a list of dictionaries
         transactions = [{'updated_name': row[0], 'sent': row[1], 'reci': row[2]} for row in rows]
-
         return flask.jsonify(transactions)
     except Exception as e:
         return flask.jsonify({'error': str(e)})
@@ -470,6 +471,33 @@ def fetch_transaction_data():
         cursor.close()
         conn.close()
 
+@app.route('/allstats', methods=['GET'])
+def fetch_stats():
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword"
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT updated_name, sent, reci FROM sender_names")
+        rows = cursor.fetchall()
+
+        # Format the data into a list of dictionaries
+        transactions = [{'updated_name': row[0], 'sent': row[1], 'reci': row[2]} for row in rows]
+        Totalamt = Total_amount(transactions)
+        Stats = [{'Total_amount':Totalamt}]
+        print("SS",Stats)
+        return flask.jsonify(Stats)
+    except Exception as e:
+        return flask.jsonify({'error': str(e)})
+    finally:
+        cursor.close()
+        conn.close()
+        
 #Helper Funcs
 
 def fetch_sender_name(original_name):
@@ -564,6 +592,8 @@ def getoriginal(updated_name):
         cursor.close()
         conn.close()
     
+
+
 if __name__ == '__main__':
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     app.run('localhost', 8080, debug=True)

@@ -68,6 +68,22 @@
       </v-dialog>
     </v-container>
   </v-app>
+  <div class="statistics-section" v-show="true">
+      <table class="statistics-table">
+        <thead>
+          <tr>
+            <th colspan="2">Statistics</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total Amount</td>
+            <td>{{ totalAmount }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  
 </template>
 
 <script>
@@ -82,6 +98,8 @@ export default {
       editingName: {},
       OriginalNameDisplay: [],
       transactions: [],
+      
+      totalAmount: 0,
     };
   },
   methods: {
@@ -89,6 +107,7 @@ export default {
       window.location.href = 'http://localhost:8080/authorize';
     },
 
+    
     async fetchTransactionData() {
             try {
                 const response = await fetch('http://localhost:8080/fetch_transactions', {
@@ -147,6 +166,7 @@ export default {
       this.dialogMessage = 'Unexpected response structure';
       this.dialog = true;
     }
+    await this.Statistics();
   } catch (error) {
     this.dialogMessage = 'Error fetching emails: ' + error.message;
     this.dialog = true;
@@ -239,6 +259,24 @@ export default {
   }
 },
 
+async Statistics() {
+            try {
+                const response = await fetch('http://localhost:8080/allstats', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                const data = await response.json();
+ 
+                this.totalAmount = data[0].Total_amount; 
+                console.log(data[0].Total_amount);
+
+                
+            } catch (error) {
+                console.error('Error fetching transactions:', error);
+            }
+        },
+
+
 },
 
   async mounted() {
@@ -311,6 +349,48 @@ th {
 
 .floating-expand:hover .hover-text {
   display: block;
+}
+
+
+.statistics-section {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  width: 75%;
+}
+
+.statistics-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #e6f7ff; /* Light blue background */
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.statistics-table th {
+  background-color: #003366; /* Navy color for heading */
+  color: #ffffff;
+  font-size: 18px;
+  padding: 12px;
+}
+
+.statistics-table td {
+  padding: 10px;
+  border: 1px solid #d0e3f0;
+  font-size: 16px;
+  color: #003366;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.statistics-table td:first-child {
+  font-weight: bold;
+}
+
+.statistics-table td:hover {
+  transform: translateY(-2px); /* Float effect */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 </style>
