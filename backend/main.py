@@ -25,7 +25,7 @@ def extracter(email_message):
     time_of_payment = time_match.group(0) if time_match else "Time not found"
     debited = bool(re.search("debited", email_message))
 
-    return [date_of_payment, amount, receiver, time_of_payment,debited]
+    return [date_of_payment, amount, receiver, time_of_payment,debited] #Debited to check if its recieved or sent
 
 def find_first_empty_cell(service, sheet_id, range_name):
     result = service.spreadsheets().values().get(

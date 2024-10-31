@@ -71,6 +71,58 @@ STORE_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 #         cursor.close()
 #         conn.close()
 
+def reset_transaction_totals():
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword"
+        )
+        cursor = conn.cursor()
+        
+        # Reset the `sent` and `reci` columns for all rows
+        cursor.execute("UPDATE sender_names SET sent = 0, reci = 0")
+        
+        conn.commit()
+    except Exception as e:
+        print(f"An error occurred while resetting transaction totals: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+def store_sent_rect(updated_name, amount, is_debited):
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword" 
+        )
+        cursor = conn.cursor()
+
+        if is_debited:
+            # Add amount to existing value in `sent` column
+            cursor.execute(
+                "UPDATE sender_names SET sent = sent + %s WHERE updated_name = %s",
+                (amount, updated_name)
+            )
+        else:
+            # Add amount to existing value in `reci` column
+            cursor.execute(
+                "UPDATE sender_names SET reci = reci + %s WHERE updated_name = %s",
+                (amount, updated_name)
+            )
+
+        conn.commit()
+    except Exception as e:
+        print(f"An error occurred while storing sender name: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
 def store_sender_name(original_name, updated_name):
     try:
         # Connect to the PostgreSQL database
@@ -78,7 +130,7 @@ def store_sender_name(original_name, updated_name):
             host="localhost",
             database="webpay",
             user="webpayuser",
-            password="yourpassword"  # Replace with your actual password
+            password="yourpassword" 
         )
         cursor = conn.cursor()
 
@@ -281,6 +333,7 @@ def print_index_table():
 
 @app.route('/fetch_emails', methods=['GET'])
 def fetch_emails():
+    reset_transaction_totals()
     if 'credentials' not in flask.session:
         return flask.redirect('authorize')
 
@@ -325,11 +378,12 @@ def fetch_emails():
 
             # Check the database for the sender name
             updated_name = fetch_sender_name(data[2])  # Fetch the updated name
-            unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": updated_name, "Time": data[3], "IsDebited": data[4], "OriginalName": data[2]}
-            filtered_messages.append(unitdata)  # Use the index to create unique keys
-
+            store_sent_rect(updated_name, data[1], data[4]) # Store the amount Sent/Recieved for the given time duration
             store_sender_name(data[2], updated_name)  # Store the sender name in the database
             
+            
+            unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": updated_name, "Time": data[3], "IsDebited": data[4], "OriginalName": data[2]}
+            filtered_messages.append(unitdata)  # Use the index to create unique keys
             # Write data to Google Sheets
             # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
 
@@ -387,6 +441,31 @@ def reset_name():
     except Exception as e:
         return flask.jsonify({'success': False, 'error': str(e)})
 
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/fetch_transactions', methods=['GET'])
+def fetch_transaction_data():
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(
+            host="localhost",
+            database="webpay",
+            user="webpayuser",
+            password="yourpassword"
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT updated_name, sent, reci FROM sender_names")
+        rows = cursor.fetchall()
+
+        # Format the data into a list of dictionaries
+        transactions = [{'updated_name': row[0], 'sent': row[1], 'reci': row[2]} for row in rows]
+
+        return flask.jsonify(transactions)
+    except Exception as e:
+        return flask.jsonify({'error': str(e)})
     finally:
         cursor.close()
         conn.close()

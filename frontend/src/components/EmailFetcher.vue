@@ -38,7 +38,11 @@
                   solo
                   hide-details
                 />
-                <span class="hover-text">{{ OriginalNameDisplay[index] }}</span>
+                <span class="hover-text">
+                        id: {{ message['OriginalName'] }}<br>
+                        sent: {{ getSentAmount(index) }}<br>
+                        received: {{ getReceivedAmount(index) }}
+                    </span>
                 <v-icon small class="ml-2" @click="editName(index, message['Receiver'])">mdi-pencil</v-icon>
                 <v-icon small class="ml-2" @click="resetName(index, message['Receiver'])">mdi-eraser</v-icon>
               </td>
@@ -75,12 +79,43 @@ export default {
       editingIndex: null,
       editingName: {},
       OriginalNameDisplay: [],
+      transactions: [],
     };
   },
   methods: {
     authorize() {
       window.location.href = 'http://localhost:8080/authorize';
     },
+
+    async fetchTransactionData() {
+            try {
+                const response = await fetch('http://localhost:8080/fetch_transactions', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                const data = await response.json();
+                console.log(data)
+                
+                this.transactions = data; // Store fetched transactions
+
+                
+            } catch (error) {
+                console.error('Error fetching transactions:', error);
+            }
+        },
+
+        getSentAmount(index) {
+            const receiver = this.messages[index]['Receiver'];
+            const transaction = this.transactions.find(tx => tx.updated_name === receiver);
+            return transaction ? transaction.sent : 0; // Return 0 if no transaction found
+        },
+        
+        getReceivedAmount(index) {
+            const receiver = this.messages[index]['Receiver'];
+            const transaction = this.transactions.find(tx => tx.updated_name === receiver);
+            return transaction ? transaction.reci : 0; // Return 0 if no transaction found
+        },
+
     async fetchEmails() {
   try {
     const response = await fetch('http://localhost:8080/fetch_emails', {
@@ -205,8 +240,9 @@ export default {
 
 },
 
-mounted() {
+  async mounted() {
   this.checkAuthorization();
+  await this.fetchTransactionData();
 }, 
 };
 </script>
