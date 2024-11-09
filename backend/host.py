@@ -350,7 +350,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=3)
+    past_week = now - timedelta(days=30)
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -488,8 +488,8 @@ def fetch_stats():
 
         # Format the data into a list of dictionaries
         transactions = [{'updated_name': row[0], 'sent': row[1], 'reci': row[2]} for row in rows]
-        Totalamt = Total_amount(transactions)
-        Stats = [{'Total_amount':Totalamt}]
+        T_sent, T_reci = Total_amount(transactions)
+        Stats = [{'Total_amount_sent':T_sent, 'Total_amount_reci':T_reci}]
         print("SS",Stats)
         return flask.jsonify(Stats)
     except Exception as e:

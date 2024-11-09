@@ -69,20 +69,26 @@
     </v-container>
   </v-app>
   <div class="statistics-section" v-show="true">
-      <table class="statistics-table">
-        <thead>
-          <tr>
-            <th colspan="2">Statistics</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Total Amount</td>
-            <td>{{ totalAmount }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+  <table class="statistics-table">
+    <thead>
+      <tr>
+        <th colspan="2">Statistics</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Total Sent</td>
+        <td>{{ Total_Sent }}</td>
+      </tr>
+      <tr>
+        <td>Total Received</td>
+        <td>{{ Total_Received }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
   
 </template>
 
@@ -99,7 +105,9 @@ export default {
       OriginalNameDisplay: [],
       transactions: [],
       
-      totalAmount: 0,
+      Total_Sent: 0,
+      Total_Received: 0,
+
     };
   },
   methods: {
@@ -267,7 +275,8 @@ async Statistics() {
                 });
                 const data = await response.json();
  
-                this.totalAmount = data[0].Total_amount; 
+                this.Total_Sent = data[0].Total_amount_sent;
+                this.Total_Received = data[0].Total_amount_reci;
                 console.log(data[0].Total_amount);
 
                 
@@ -353,44 +362,35 @@ th {
 
 
 .statistics-section {
-  margin-top: 20px;
   display: flex;
   justify-content: center;
-  width: 75%;
+  margin-top: 20px;
 }
 
 .statistics-table {
-  width: 100%;
+  width: 75%;
+  max-width: 600px;
   border-collapse: collapse;
-  background-color: #e6f7ff; /* Light blue background */
+  background-color: #f0f8ff;
+  color: #000080;
   text-align: center;
-  border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
 }
 
 .statistics-table th {
-  background-color: #003366; /* Navy color for heading */
-  color: #ffffff;
-  font-size: 18px;
-  padding: 12px;
+  background-color: #1e3a8a;
+  color: #f0f8ff;
+  font-size: 1.2em;
+  padding: 10px;
 }
 
 .statistics-table td {
-  padding: 10px;
-  border: 1px solid #d0e3f0;
-  font-size: 16px;
-  color: #003366;
-  transition: transform 0.3s, box-shadow 0.3s;
+  padding: 15px;
+  border: 1px solid #ccc;
 }
 
-.statistics-table td:first-child {
-  font-weight: bold;
-}
-
-.statistics-table td:hover {
-  transform: translateY(-2px); /* Float effect */
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+.statistics-table tbody tr:hover {
+  background-color: #dbeafe;
+  transition: background-color 0.3s;
 }
 
 </style>
