@@ -1,3 +1,4 @@
+from decimal import Decimal
 import os
 import flask
 import base64
@@ -209,8 +210,8 @@ def test_api_request():
                 # Write data to Google Sheets
                 # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
 
-
-
+                
+    fetch_stats()
     flask.session['credentials'] = credentials_to_dict(credentials)
     return flask.jsonify({'messages':filtered_messages})
 
@@ -350,7 +351,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=30)
+    past_week = now - timedelta(days=2) #needs to be fixed
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -389,6 +390,7 @@ def fetch_emails():
             # Write data to Google Sheets
             # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
 
+            print("EMail", DAT)
     flask.session['credentials'] = credentials_to_dict(credentials)
     return flask.jsonify({'messages': filtered_messages})
 
@@ -490,7 +492,6 @@ def fetch_stats():
         transactions = [{'updated_name': row[0], 'sent': row[1], 'reci': row[2]} for row in rows]
         T_sent, T_reci = Total_amount(transactions)
         Stats = [{'Total_amount_sent':T_sent, 'Total_amount_reci':T_reci}]
-        print("SS",Stats)
         return flask.jsonify(Stats)
     except Exception as e:
         return flask.jsonify({'error': str(e)})
