@@ -53,7 +53,10 @@
             </tbody>
           </v-table>
 
-          <v-btn @click="fetchEmails" color="primary">Fetch Emails</v-btn>
+          <v-btn @click="fetchEmails" color="primary">Fetch Emails</v-btn> 
+          <div v-if="loading" class="loading-screen">
+          <p>Loading... Please wait.</p>
+        </div>
         </v-card-text>
       </v-card>
 
@@ -84,6 +87,10 @@
         <td>Total Received</td>
         <td>{{ Total_Received }}</td>
       </tr>
+      <tr>
+        <td>Highest Money Sent to</td>
+        <td>{{ HighestSender }}</td>
+      </tr>
     </tbody>
   </table>
 </div>
@@ -104,9 +111,11 @@ export default {
       editingName: {},
       OriginalNameDisplay: [],
       transactions: [],
-      
+      loading: false,
+
       Total_Sent: 0,
       Total_Received: 0,
+      HighestSender: {},
 
     };
   },
@@ -145,6 +154,7 @@ export default {
         },
 
     async fetchEmails() {
+      this.loading = true;
   try {
     const response = await fetch('http://localhost:8080/fetch_emails', {
       method: 'GET',
@@ -153,6 +163,7 @@ export default {
     const data = await response.json();
 
     if (data.messages) {
+      this.loading = false;
       this.messages = data.messages;
       // Initialize editingName with the current receiver names
       this.editingName = this.messages.reduce((acc, message, index) => {
@@ -277,7 +288,9 @@ async Statistics() {
  
                 this.Total_Sent = data[0].Total_amount_sent;
                 this.Total_Received = data[0].Total_amount_reci;
-                console.log(data[0].Total_amount);
+                this.HighestSender = data[0].Largest_sender;
+                
+                
 
                 
             } catch (error) {
@@ -290,7 +303,8 @@ async Statistics() {
 
   async mounted() {
   this.checkAuthorization();
-  await this.fetchTransactionData();
+  this.fetchTransactionData();
+  
 }, 
 };
 </script>
@@ -393,4 +407,17 @@ th {
   transition: background-color 0.3s;
 }
 
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 20px;
+}
 </style>

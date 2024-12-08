@@ -17,7 +17,7 @@ from google.auth.transport.requests import Request
 from datetime import datetime, timedelta
 
 #self functions
-from stats import Total_amount
+from stats import Total_amount, Viz
 
 load_dotenv('../.env')
 CLIENT_SECRETS_FILE = "backend/client_secret.json"
@@ -182,7 +182,7 @@ def test_api_request():
     filtered_messages = []
 
     now = datetime.utcnow()
-    past_week = now - timedelta(days=7)
+    past_week = now - timedelta(days=14)
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     results = service.users().messages().list(userId='me', q=f"from:{target_sender} after:{past_week_str}").execute()
@@ -351,7 +351,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=2) #needs to be fixed
+    past_week = now - timedelta(days=14) #needs to be fixed
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -386,11 +386,11 @@ def fetch_emails():
             
                    
             unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": updated_name, "Time": data[3], "IsDebited": data[4], "OriginalName": data[2]}
-            filtered_messages.append(unitdata)  # Use the index to create unique keys
+            filtered_messages.append(unitdata)  # Individual Transaction Data / Use for previous Stats
             # Write data to Google Sheets
             # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
 
-            print("EMail", DAT)
+    Viz(filtered_messages)
     flask.session['credentials'] = credentials_to_dict(credentials)
     return flask.jsonify({'messages': filtered_messages})
 
@@ -490,8 +490,9 @@ def fetch_stats():
 
         # Format the data into a list of dictionaries
         transactions = [{'updated_name': row[0], 'sent': row[1], 'reci': row[2]} for row in rows]
-        T_sent, T_reci = Total_amount(transactions)
-        Stats = [{'Total_amount_sent':T_sent, 'Total_amount_reci':T_reci}]
+        T_sent, T_reci, Highest_sender = Total_amount(transactions) #from stats.py
+        
+        Stats = [{'Total_amount_sent':T_sent, 'Total_amount_reci':T_reci, 'Largest_sender':Highest_sender}]
         return flask.jsonify(Stats)
     except Exception as e:
         return flask.jsonify({'error': str(e)})

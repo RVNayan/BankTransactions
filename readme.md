@@ -17,5 +17,10 @@ View your complete UPI transaction history with just a single click! This tool p
  - Stats Showing Total Individual Transactions, Frequency of Payments and many more to come...
 
 
+psql -h localhost -U webpayuser -d webpay
+
+#Add loading screen and plots
+
+
   
 

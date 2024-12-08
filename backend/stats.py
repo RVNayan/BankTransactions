@@ -11,10 +11,32 @@ def Total_amount(data):
     names = [(item['updated_name']) for item in data]
     sent = np.array([float(item['sent']) for item in data])  
     received = np.array([float(item['reci']) for item in data]) 
-    Predict_next(data)
-    return sum(sent), sum(received)
+    
+    large_sent_index = np.argmax(sent)
+    large_reci_index = np.argmax(received)
+
+    # print(sent[large_sent_index], names[large_sent_index]) 
+    
+    return sum(sent), sum(received), names[large_sent_index]
     
 
+def Viz(rawdata):  # Total Amount spent on a single day
+    Date = {}  # Dictionary to store total amounts per date
+    for i in rawdata:
+        date_key = i['Date of Payment']  # Extract the date
+        amount = float(i['Amount'])  # Ensure the amount is numeric
+        
+        # Update the total for the date
+        if date_key not in Date:
+            Date[date_key] = amount
+        else:
+            Date[date_key] += amount
+    
+    print(Date)
+
+       
+    
+    pass
 def Predict_next(data):
     
     names = [(item['updated_name']) for item in data]
