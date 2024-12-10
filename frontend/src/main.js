@@ -1,9 +1,11 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import { createVuetify } from 'vuetify';
-import 'vuetify/styles'; // Import the styles
+import router from './router/index.js';  // Import the router
 
-// Vuetify's design system is based on material design principles
+// Vuetify setup
+import 'vuetify/styles';
+import '@mdi/font/css/materialdesignicons.css';
 import { aliases, mdi } from 'vuetify/iconsets/mdi';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
@@ -16,8 +18,13 @@ const vuetify = createVuetify({
     aliases,
     sets: { mdi },
   },
+  theme: {
+    defaultTheme: 'light',
+  },
 });
 
-const app = createApp(App);
-app.use(vuetify); // Register Vuetify as a plugin
-app.mount('#app');
+// Create Vue app instance
+createApp(App)
+  .use(vuetify)  // Use Vuetify
+  .use(router)   // Use Vue Router
+  .mount('#app');

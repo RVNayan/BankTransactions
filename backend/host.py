@@ -501,6 +501,14 @@ def fetch_stats():
         conn.close()
         
 #Helper Funcs
+@app.route('/statistics', methods=['GET'])
+def get_statistics():
+    statistics = []
+    # Simulate some statistics for demonstration
+    statistics.append({"date": "2024-12-01", "totalSpent": 150.75, "totalReceived": 200.50})
+    statistics.append({"date": "2024-12-02", "totalSpent": 120.00, "totalReceived": 180.00})
+    statistics.append({"date": "2024-12-03", "totalSpent": 175.25, "totalReceived": 210.00})
+    return flask.jsonify(statistics)
 
 def fetch_sender_name(original_name):
     try:

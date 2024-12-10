@@ -18,6 +18,8 @@ View your complete UPI transaction history with just a single click! This tool p
 
 
 psql -h localhost -U webpayuser -d webpay
+npm install vue-router
+npm install chart.js
 
 #Add loading screen and plots
 

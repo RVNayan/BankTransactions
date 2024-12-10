@@ -1,4 +1,5 @@
 <template>
+    <div>
   <v-app>
     <v-container>
       <v-toolbar :color="authorized ? 'green' : 'primary'" dark>
@@ -55,8 +56,8 @@
 
           <v-btn @click="fetchEmails" color="primary">Fetch Emails</v-btn> 
           <div v-if="loading" class="loading-screen">
-          <p>Loading... Please wait.</p>
-        </div>
+      <div class="spinner"></div>
+    </div>
         </v-card-text>
       </v-card>
 
@@ -95,14 +96,14 @@
   </table>
 </div>
 
-
-  
+</div>
 </template>
 
 <script>
 export default {
   data() {
     return {
+      name: "EmailFetcher",
       messages: [],
       dialog: false,
       dialogMessage: '',
@@ -417,7 +418,23 @@ th {
   display: flex;
   justify-content: center;
   align-items: center;
-  color: white;
-  font-size: 20px;
+}
+
+.spinner {
+  border: 6px solid rgba(255, 255, 255, 0.2);
+  border-top: 6px solid white;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>
