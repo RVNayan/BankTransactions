@@ -20,7 +20,7 @@ def Total_amount(data):
     return sum(sent), sum(received), names[large_sent_index]
     
 
-def Viz(rawdata):  # Total Amount spent on a single day
+def DayWiseExpenses(rawdata):  # Total Amount spent on a single day
     Date = {}  # Dictionary to store total amounts per date
     for i in rawdata:
         date_key = i['Date of Payment']  # Extract the date
@@ -31,12 +31,11 @@ def Viz(rawdata):  # Total Amount spent on a single day
             Date[date_key] = amount
         else:
             Date[date_key] += amount
-    
-    print(Date)
 
-       
+    return Date  # Return the computed day-wise expenses
+
+
     
-    pass
 def Predict_next(data):
     
     names = [(item['updated_name']) for item in data]

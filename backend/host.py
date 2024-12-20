@@ -17,7 +17,7 @@ from google.auth.transport.requests import Request
 from datetime import datetime, timedelta
 
 #self functions
-from stats import Total_amount, Viz
+from stats import Total_amount, DayWiseExpenses
 
 load_dotenv('../.env')
 CLIENT_SECRETS_FILE = "backend/client_secret.json"
@@ -166,54 +166,54 @@ def store_sender_name(original_name, updated_name):
 def index():
     return print_index_table()
 
-@app.route('/test')
-def test_api_request():
-    fulldata = {}
-    if 'credentials' not in flask.session:
-        return flask.redirect('authorize')
+# @app.route('/test')
+# def test_api_request():
+#     fulldata = {}
+#     if 'credentials' not in flask.session:
+#         return flask.redirect('authorize')
 
-    credentials = google.oauth2.credentials.Credentials(
-        **flask.session['credentials'])
+#     credentials = google.oauth2.credentials.Credentials(
+#         **flask.session['credentials'])
 
-    service = googleapiclient.discovery.build(
-        'gmail', 'v1', credentials=credentials)
+#     service = googleapiclient.discovery.build(
+#         'gmail', 'v1', credentials=credentials)
 
-    target_sender = sender_id
-    filtered_messages = []
+#     target_sender = sender_id
+#     filtered_messages = []
 
-    now = datetime.utcnow()
-    past_week = now - timedelta(days=14)
-    past_week_str = past_week.strftime("%Y/%m/%d")
+#     now = datetime.utcnow()
+#     past_week = now - timedelta(days=4)
+#     past_week_str = past_week.strftime("%Y/%m/%d")
 
-    results = service.users().messages().list(userId='me', q=f"from:{target_sender} after:{past_week_str}").execute()
-    messages = results.get('messages', [])
+#     results = service.users().messages().list(userId='me', q=f"from:{target_sender} after:{past_week_str}").execute()
+#     messages = results.get('messages', [])
 
-    if not messages:
-        return flask.jsonify({'error': 'No messages found in the past week.'})
-    else:
-        for index, message in enumerate(messages):
-            msg = service.users().messages().get(userId='me', id=message['id']).execute()
-            headers = msg['payload']['headers']
-            sender_found = any(header['name'] == 'From' and target_sender in header['value'] for header in headers)
+#     if not messages:
+#         return flask.jsonify({'error': 'No messages found in the past week.'})
+#     else:
+#         for index, message in enumerate(messages):
+#             msg = service.users().messages().get(userId='me', id=message['id']).execute()
+#             headers = msg['payload']['headers']
+#             sender_found = any(header['name'] == 'From' and target_sender in header['value'] for header in headers)
 
-            if sender_found:
-                full_message = ""
-                for part in msg['payload']['parts']:
-                    if 'data' in part['body']:
-                        raw_data = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8', 'ignore')
-                        full_message += raw_data + "\n"
-                DAT = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
-                data = extracter(full_message + DAT)
-                unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": data[2], "Time": data[3]}
-                fulldata[f'message_{index}'] = unitdata
+#             if sender_found:
+#                 full_message = ""
+#                 for part in msg['payload']['parts']:
+#                     if 'data' in part['body']:
+#                         raw_data = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8', 'ignore')
+#                         full_message += raw_data + "\n"
+#                 DAT = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
+#                 data = extracter(full_message + DAT)
+#                 unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": data[2], "Time": data[3]}
+#                 fulldata[f'message_{index}'] = unitdata
 
-                # Write data to Google Sheets
-                # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
+#                 # Write data to Google Sheets
+#                 # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
 
                 
-    fetch_stats()
-    flask.session['credentials'] = credentials_to_dict(credentials)
-    return flask.jsonify({'messages':filtered_messages})
+#     fetch_stats()
+#     flask.session['credentials'] = credentials_to_dict(credentials)
+#     return flask.jsonify({'messages':filtered_messages})
 
 # Remaining routes and functions omitted for brevity
 
@@ -351,7 +351,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=14) #needs to be fixed
+    past_week = now - timedelta(days=15) #needs to be fixed
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -389,8 +389,9 @@ def fetch_emails():
             filtered_messages.append(unitdata)  # Individual Transaction Data / Use for previous Stats
             # Write data to Google Sheets
             # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
-
-    Viz(filtered_messages)
+    
+    save_filtered_messages(filtered_messages)
+        
     flask.session['credentials'] = credentials_to_dict(credentials)
     return flask.jsonify({'messages': filtered_messages})
 
@@ -500,15 +501,17 @@ def fetch_stats():
         cursor.close()
         conn.close()
         
-#Helper Funcs
+#Helper Funcs, Unable to store the global Transaction history, The page is getting refreshed when switched to Statistics section
 @app.route('/statistics', methods=['GET'])
 def get_statistics():
-    statistics = []
-    # Simulate some statistics for demonstration
-    statistics.append({"date": "2024-12-01", "totalSpent": 150.75, "totalReceived": 200.50})
-    statistics.append({"date": "2024-12-02", "totalSpent": 120.00, "totalReceived": 180.00})
-    statistics.append({"date": "2024-12-03", "totalSpent": 175.25, "totalReceived": 210.00})
-    return flask.jsonify(statistics)
+    # Load filtered messages from the JSON file
+    stats = load_filtered_messages()
+
+    if not stats:  
+        return flask.jsonify({'error': 'No data available'}), 404
+    day_wise_expenses = DayWiseExpenses(stats)
+    # clear_filtered_messages()
+    return flask.jsonify(day_wise_expenses)
 
 def fetch_sender_name(original_name):
     try:
@@ -603,7 +606,40 @@ def getoriginal(updated_name):
         conn.close()
     
 
+def save_filtered_messages(filtered_messages):
+    file_path = "texts/filtered_messages.json"
+    
+    try:
+        with open(file_path, 'w') as file:
+            flask.json.dump(filtered_messages, file, indent=4) 
+        print(f"Filtered messages successfully saved to {file_path}")
+    except Exception as e:
+        print(f"Error writing to file: {e}")
 
+def load_filtered_messages():
+    file_path = "texts/filtered_messages.json"
+    
+    try:
+        with open(file_path, 'r') as file:
+            filtered_messages = flask.json.load(file)
+        print(f"Filtered messages successfully loaded from {file_path}")
+        return filtered_messages
+    except FileNotFoundError:
+        print(f"File not found at {file_path}")
+        return None
+    except flask.json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        return None
+
+def clear_filtered_messages():
+    """Clears the content of the filtered_messages.json file."""
+    file_path = "texts/filtered_messages.json"
+    try:
+        with open(file_path, "w") as file:
+            file.write("{}") 
+    except Exception as e:
+        print(f"Failed to clear the file: {e}")
+        
 if __name__ == '__main__':
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     app.run('localhost', 8080, debug=True)

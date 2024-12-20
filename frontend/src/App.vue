@@ -8,7 +8,7 @@
         </v-btn>
 
         <!-- Statistics button -->
-        <v-btn @click="currentPage = 'Statistics'" variant="text">
+        <v-btn @click="fetchStatistics" variant="text">
           Statistic
         </v-btn>
       </v-container>
@@ -25,6 +25,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import EmailFetcher from './components/EmailFetcher.vue';
 import StatisticsPage from './components/StatisticsPage.vue';
 
@@ -37,19 +38,34 @@ export default {
   data() {
     return {
       currentPage: 'EmailFetcher',
-      messages: [],  // Your fetched messages data
+      messages: [], // Your fetched messages data
       statistics: [] // Your statistics data
     };
   },
   methods: {
     // Fetch messages when needed
+
+    goToStatisticsPage() {
+      this.$router.push('/statistics');
+    },
+    
     fetchEmails() {
       // Simulate fetching data
       this.messages = [/* fetched messages here */];
     },
     fetchStatistics() {
-      // Simulate fetching statistics data
-      this.statistics = [/* fetched statistics data here */];
+      // Trigger fetching of statistics and switch page
+      this.currentPage = 'Statistics';
+
+      // Axios request to backend for statistics
+      axios
+        .get('http://localhost:8080/statistics')
+        .then(response => {
+          this.statistics = response.data; // Assign fetched data
+        })
+        .catch(error => {
+          console.error('Error fetching statistics:', error);
+        });
     }
   },
   mounted() {
