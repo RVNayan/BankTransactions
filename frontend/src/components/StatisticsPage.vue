@@ -3,59 +3,51 @@
     <h1>Statistics Page</h1>
     <p>Day-wise expenses visualized below:</p>
     
-    <!-- Container for the chart -->
     <div class="chart-container">
       <canvas id="expensesChart"></canvas>
-    </div>
-    
-    <!-- Placeholder for future charts/data plots -->
-    <div class="future-charts">
-      <p>Future charts and data plots will be added here.</p>
     </div>
   </div>
 </template>
 
 <script>
-import { defineComponent } from "vue";
-import Chart from "chart.js/auto";
+import { defineComponent, watch } from 'vue';
+import Chart from 'chart.js/auto';
 
 export default defineComponent({
-  name: "StatisticsPage",
-  data() {
-    return {
-      statistics: null, // Raw statistics data
-      chart: null, // Chart instance
-    };
+  name: 'StatisticsPage',
+  props: {
+    statistics: {
+      type: Object,
+      required: true,
+    },
   },
-  async created() {
-    await this.fetchStatistics();
-  },
-  activated() {
-    // Refetch statistics when navigating back to the page
-    this.fetchStatistics();
+  watch: {
+    // Watch for changes in the statistics prop
+    statistics(newStats) {
+      if (newStats) {
+        this.createChart(newStats);
+      }
+    }
   },
   methods: {
-    async fetchStatistics() {
-      try {
-        const response = await fetch("http://localhost:8080/statistics", {
-          method: "GET",
-          credentials: "include", // Include cookies for session management if needed
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        this.statistics = data;
-        this.createChart(data); // Create or update chart after fetching data
-      } catch (error) {
-        console.error("Failed to fetch statistics:", error);
-      }
-    },
     createChart(statistics) {
-      const labels = Object.keys(statistics);
-      const data = Object.values(statistics);
+      // Convert the date strings to Date objects for sorting
+      const labels = Object.keys(statistics).map(date => {
+        const [day, month] = date.split(' ');
+        const monthIndex = new Date(Date.parse(month +" 1, 2021")).getMonth(); // Convert month name to month index
+        return new Date(2021, monthIndex, parseInt(day)); // Reconstruct the full date as a Date object
+      });
+
+      // Sort the labels array
+      labels.sort((a, b) => a - b); // Sort by date
+
+      // Convert the sorted labels back to the format 'DD MMM'
+      const sortedLabels = labels.map(date => {
+        const options = { day: '2-digit', month: 'short' };
+        return date.toLocaleDateString('en-GB', options); // Format as 'DD MMM'
+      });
+
+      const data = sortedLabels.map(label => statistics[label]);
 
       // Destroy the existing chart instance if it exists
       if (this.chart) {
@@ -67,7 +59,7 @@ export default defineComponent({
       this.chart = new Chart(ctx, {
         type: "bar",
         data: {
-          labels,
+          labels: sortedLabels, // Use sorted and formatted date labels
           datasets: [
             {
               label: "Total Expenses",
@@ -85,9 +77,9 @@ export default defineComponent({
               position: "top",
               labels: {
                 font: {
-                  family: "Arial, sans-serif", // Font family
-                  size: 14, // Font size
-                  weight: "bold", // Font weight
+                  family: "Arial, sans-serif",
+                  size: 14,
+                  weight: "bold",
                 },
               },
             },
@@ -104,7 +96,6 @@ export default defineComponent({
             tooltip: {
               callbacks: {
                 label: function (context) {
-                  // Format the tooltip value as currency
                   const value = context.raw;
                   return `₹${value.toFixed(2)}`;
                 },
@@ -134,7 +125,6 @@ export default defineComponent({
             y: {
               ticks: {
                 callback: function (value) {
-                  // Format the y-axis values as currency
                   return `₹${value}`;
                 },
                 font: {
@@ -157,12 +147,13 @@ export default defineComponent({
           },
         },
       });
-    },
+    }
   },
 });
 </script>
 
 <style scoped>
+/* Styling for the statistics page */
 .StatisticsPage {
   padding: 20px;
   text-align: center;
@@ -180,14 +171,5 @@ h1 {
   border-radius: 10px;  /* Rounded corners for the box */
   padding: 20px;
   background-color: #f9f9f9;  /* Light background color */
-}
-
-.future-charts {
-  margin-top: 30px;
-  padding: 20px;
-  border: 2px dashed #ccc;  /* Dashed border for the placeholder */
-  border-radius: 10px;
-  background-color: #f0f0f0;
-  font-style: italic;
 }
 </style>

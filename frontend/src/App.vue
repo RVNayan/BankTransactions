@@ -2,14 +2,12 @@
   <v-app>
     <v-app-bar color="primary">
       <v-container class="d-flex align-center">
-        <!-- Email Fetch button -->
         <v-btn @click="currentPage = 'EmailFetcher'" variant="text">
           Email Fetch
         </v-btn>
 
-        <!-- Statistics button -->
         <v-btn @click="fetchStatistics" variant="text">
-          Statistic
+          Statistics
         </v-btn>
       </v-container>
     </v-app-bar>
@@ -18,7 +16,11 @@
       <v-container>
         <!-- Use v-show to keep both components in the DOM -->
         <EmailFetcher v-show="currentPage === 'EmailFetcher'" :messages="messages" />
-        <StatisticsPage v-show="currentPage === 'Statistics'" :statistics="statistics" />
+        <!-- Use key to force re-render of the StatisticsPage component whenever statistics changes -->
+        <StatisticsPage
+          v-show="currentPage === 'Statistics'"
+          :statistics="statistics"
+          :key="statistics ? statistics.id : 'default'"/>
       </v-container>
     </v-main>
   </v-app>
@@ -43,18 +45,11 @@ export default {
     };
   },
   methods: {
-    // Fetch messages when needed
-
-    goToStatisticsPage() {
-      this.$router.push('/statistics');
-    },
-    
     fetchEmails() {
       // Simulate fetching data
       this.messages = [/* fetched messages here */];
     },
     fetchStatistics() {
-      // Trigger fetching of statistics and switch page
       this.currentPage = 'Statistics';
 
       // Axios request to backend for statistics
@@ -74,7 +69,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-/* Add any styles specific to App.vue */
-</style>

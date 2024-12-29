@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
-
+from datetime import datetime
 #For Fetching amount sent or reci
 
 def Total_amount(data):
@@ -20,19 +20,29 @@ def Total_amount(data):
     return sum(sent), sum(received), names[large_sent_index]
     
 
-def DayWiseExpenses(rawdata):  # Total Amount spent on a single day
+def DayWiseExpenses(rawdata):
     Date = {}  # Dictionary to store total amounts per date
+    
     for i in rawdata:
         date_key = i['Date of Payment']  # Extract the date
         amount = float(i['Amount'])  # Ensure the amount is numeric
         
+        # Standardize date format to "DD MMM"
+        date_obj = datetime.strptime(date_key, '%d %b')  # Convert to datetime object
+        formatted_date = date_obj.strftime('%d %b')  # Format as "DD MMM"
+        
         # Update the total for the date
-        if date_key not in Date:
-            Date[date_key] = amount
+        if formatted_date not in Date:
+            Date[formatted_date] = amount
         else:
-            Date[date_key] += amount
+            Date[formatted_date] += amount
+    
+    # Sort the dictionary by date
+    sorted_dates = sorted(Date.keys(), key=lambda x: datetime.strptime(x, '%d %b'))
+    sorted_date_amounts = {date: Date[date] for date in sorted_dates}
 
-    return Date  # Return the computed day-wise expenses
+    print("Sorted Date:", sorted_date_amounts)
+    return sorted_date_amounts
 
 
     

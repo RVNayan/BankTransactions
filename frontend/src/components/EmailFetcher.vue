@@ -3,13 +3,13 @@
   <v-app>
     <v-container>
       <v-toolbar :color="authorized ? 'green' : 'primary'" dark>
-        <v-toolbar-title>{{ authorized ? 'Authorized Successfully' : 'Gmail Fetcher' }}</v-toolbar-title>
+        <v-toolbar-title>{{ authorized ? 'Authorized Successfully' : 'Authorise Now' }}</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn v-if="!authorized" @click="authorize">Authorize API Access</v-btn>
       </v-toolbar>
 
       <v-card>
-        <v-card-title>Email Messages</v-card-title>
+        <v-card-title>Transaction Viewer V1.0</v-card-title>
         <v-card-text>
           <v-table>
             <thead>
@@ -54,7 +54,7 @@
             </tbody>
           </v-table>
 
-          <v-btn @click="fetchEmails" color="primary">Fetch Emails</v-btn> 
+          <v-btn @click="fetchEmails" color="primary">Click here</v-btn> 
           <div v-if="loading" class="loading-screen">
       <div class="spinner"></div>
     </div>
@@ -303,7 +303,7 @@ async Statistics() {
 },
 
   async mounted() {
-  this.checkAuthorization();
+  await this.checkAuthorization();
   this.fetchTransactionData();
   
 }, 

@@ -21,7 +21,7 @@ psql -h localhost -U webpayuser -d webpay
 npm install vue-router
 npm install chart.js
 
-#Add loading screen and plots
+Clear credentails and revoke tokens before changing the Date of Fecthing Transactions
 
 
   
