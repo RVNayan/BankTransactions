@@ -1,10 +1,14 @@
 <template>
   <div class="StatisticsPage">
     <h1>Statistics Page</h1>
-    <p>Day-wise expenses visualized below:</p>
-    
+    <p>Chart 1 (Bar Chart)</p>
     <div class="chart-container">
       <canvas id="expensesChart"></canvas>
+    </div>
+    
+    <p>Chart 2 (Pie Chart)</p>
+    <div class="chart-container">
+      <canvas id="PieChart1"></canvas>
     </div>
   </div>
 </template>
@@ -22,26 +26,23 @@ export default defineComponent({
     },
   },
   watch: {
-    // Watch for changes in the statistics prop
     statistics(newStats) {
       if (newStats) {
-        this.createChart(newStats);
+        this.createBarChart(newStats); // For the bar chart
+        this.createPieChart(newStats); // For the pie chart
       }
     }
   },
   methods: {
-    createChart(statistics) {
-      // Convert the date strings to Date objects for sorting
+    createBarChart(statistics) {
       const labels = Object.keys(statistics).map(date => {
         const [day, month] = date.split(' ');
         const monthIndex = new Date(Date.parse(month +" 1, 2021")).getMonth(); // Convert month name to month index
         return new Date(2021, monthIndex, parseInt(day)); // Reconstruct the full date as a Date object
       });
 
-      // Sort the labels array
       labels.sort((a, b) => a - b); // Sort by date
 
-      // Convert the sorted labels back to the format 'DD MMM'
       const sortedLabels = labels.map(date => {
         const options = { day: '2-digit', month: 'short' };
         return date.toLocaleDateString('en-GB', options); // Format as 'DD MMM'
@@ -49,17 +50,15 @@ export default defineComponent({
 
       const data = sortedLabels.map(label => statistics[label]);
 
-      // Destroy the existing chart instance if it exists
-      if (this.chart) {
-        this.chart.destroy();
+      if (this.barChart) {
+        this.barChart.destroy();
       }
 
-      // Create a new chart instance
       const ctx = document.getElementById("expensesChart").getContext("2d");
-      this.chart = new Chart(ctx, {
+      this.barChart = new Chart(ctx, {
         type: "bar",
         data: {
-          labels: sortedLabels, // Use sorted and formatted date labels
+          labels: sortedLabels,
           datasets: [
             {
               label: "Total Expenses",
@@ -147,7 +146,47 @@ export default defineComponent({
           },
         },
       });
-    }
+    },
+
+    createPieChart(statistics) {
+      // Example pie chart data for PieChart1
+      const labels = Object.keys(statistics);
+      const data = labels.map(label => statistics[label]);
+
+      if (this.pieChart) {
+        this.pieChart.destroy();
+      }
+
+      const ctx = document.getElementById("PieChart1").getContext("2d");
+      this.pieChart = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: labels,  // The labels could be days, categories, etc.
+          datasets: [{
+            label: "Expense Distribution",
+            data: data,  // The corresponding values
+            backgroundColor: ["#42A5F5", "#FF7043", "#66BB6A", "#FFEB3B"],
+            hoverOffset: 4,
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: "top",
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const value = context.raw;
+                  return `₹${value.toFixed(2)}`;
+                },
+              },
+            },
+          },
+        },
+      });
+    },
   },
 });
 </script>
@@ -166,7 +205,7 @@ h1 {
 .chart-container {
   width: 80%;  /* Set the width of the chart container */
   height: 300px;  /* Set the height of the chart */
-  margin: 0 auto;
+  margin: 20px auto;
   border: 2px solid #1E88E5;  /* Border around the chart */
   border-radius: 10px;  /* Rounded corners for the box */
   padding: 20px;

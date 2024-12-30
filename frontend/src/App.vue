@@ -16,10 +16,11 @@
       <v-container>
         <!-- Use v-show to keep both components in the DOM -->
         <EmailFetcher v-show="currentPage === 'EmailFetcher'" :messages="messages" />
-        <!-- Use key to force re-render of the StatisticsPage component whenever statistics changes -->
+        
         <StatisticsPage
           v-show="currentPage === 'Statistics'"
           :statistics="statistics"
+          :newChartData="newChartData" 
           :key="statistics ? statistics.id : 'default'"/>
       </v-container>
     </v-main>
@@ -40,31 +41,37 @@ export default {
   data() {
     return {
       currentPage: 'EmailFetcher',
-      messages: [], // Your fetched messages data
-      statistics: [] // Your statistics data
+      messages: [],
+      statistics: [],
+      newChartData: [] // Data for the new chart
     };
   },
   methods: {
     fetchEmails() {
-      // Simulate fetching data
       this.messages = [/* fetched messages here */];
     },
     fetchStatistics() {
       this.currentPage = 'Statistics';
 
-      // Axios request to backend for statistics
-      axios
-        .get('http://localhost:8080/statistics')
+      axios.get('http://localhost:8080/statistics')
         .then(response => {
-          this.statistics = response.data; // Assign fetched data
+          this.statistics = response.data;
         })
         .catch(error => {
           console.error('Error fetching statistics:', error);
         });
+
+      // Fetch new chart data from another endpoint
+      axios.get('http://localhost:8080/new-chart-data') // New API endpoint
+        .then(response => {
+          this.newChartData = response.data; // Update newChartData
+        })
+        .catch(error => {
+          console.error('Error fetching new chart data:', error);
+        });
     }
   },
   mounted() {
-    // Fetch initial data when the page is mounted
     this.fetchEmails();
   }
 };

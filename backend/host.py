@@ -17,7 +17,7 @@ from google.auth.transport.requests import Request
 from datetime import datetime, timedelta
 
 #self functions
-from stats import Total_amount, DayWiseExpenses
+from stats import Total_amount, DayWiseExpenses, Pie
 
 load_dotenv('../.env')
 CLIENT_SECRETS_FILE = "backend/client_secret.json"
@@ -351,7 +351,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=3) #needs to be fixed
+    past_week = now - timedelta(days=15) #needs to be fixed
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -492,6 +492,16 @@ def fetch_stats():
         # Format the data into a list of dictionaries
         transactions = [{'updated_name': row[0], 'sent': row[1], 'reci': row[2]} for row in rows]
         T_sent, T_reci, Highest_sender = Total_amount(transactions) #from stats.py
+        
+        file_path = "texts/all_transactions.json"
+    
+        try:
+            with open(file_path, 'w') as file:
+                flask.json.dump(transactions, file, indent=4) 
+            print(f"Filtered messages successfully saved to {file_path}")
+        except Exception as e:
+            print(f"Error writing to file: {e}")
+            
         
         Stats = [{'Total_amount_sent':T_sent, 'Total_amount_reci':T_reci, 'Largest_sender':Highest_sender}]
         return flask.jsonify(Stats)

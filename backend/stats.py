@@ -44,7 +44,12 @@ def DayWiseExpenses(rawdata):
     print("Sorted Date:", sorted_date_amounts)
     return sorted_date_amounts
 
-
+#Pie Chart Data
+def Pie(data):
+    names = [(item['updated_name']) for item in data]
+    sent = np.array([float(item['sent']) for item in data])  
+    received = np.array([float(item['reci']) for item in data])
+    return names, sent / sum(sent), received / sum(received)
     
 def Predict_next(data):
     
