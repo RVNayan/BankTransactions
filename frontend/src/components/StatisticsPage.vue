@@ -158,43 +158,47 @@ export default defineComponent({
       });
     },
     createPieChart(statistics) {
-      const labels = Object.keys(statistics);
-      const data = labels.map(label => statistics[label]);
+  // Filter out entries where the 'sent' amount is 0
+  const filteredData = statistics.filter(item => parseFloat(item.sent) > 0);
 
-      if (this.pieChart) {
-        this.pieChart.destroy();
-      }
+  // Get the names and corresponding sent amounts for the chart
+  const labels = filteredData.map(item => item.updated_name);
+  const data = filteredData.map(item => parseFloat(item.sent));
 
-      const ctx = document.getElementById("PieChart1").getContext("2d");
-      this.pieChart = new Chart(ctx, {
-        type: "pie",
-        data: {
-          labels: labels,
-          datasets: [{
-            label: "Expense Distribution",
-            data: data,
-            backgroundColor: ["#42A5F5", "#FF7043", "#66BB6A", "#FFEB3B"],
-            hoverOffset: 4,
-          }],
+  if (this.pieChart) {
+    this.pieChart.destroy();
+  }
+
+  const ctx = document.getElementById("PieChart1").getContext("2d");
+  this.pieChart = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Expense Distribution",
+        data: data,
+        backgroundColor: ["#42A5F5", "#FF7043", "#66BB6A", "#FFEB3B"],
+        hoverOffset: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: "top",
-            },
-            tooltip: {
-              callbacks: {
-                label: function (context) {
-                  const value = context.raw;
-                  return `₹${value.toFixed(2)}`;
-                },
-              },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const value = context.raw;
+              return `₹${value.toFixed(2)}`;
             },
           },
         },
-      });
+      },
     },
+  });
+},
   },
   mounted() {
     // This will be triggered when statistics are passed as a prop

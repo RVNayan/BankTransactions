@@ -351,7 +351,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=13) #needs to be fixed
+    past_week = now - timedelta(days=15) #needs to be fixed
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -516,7 +516,22 @@ def fetch_stats():
 def get_statistics():
     # Load filtered messages from the JSON file
     stats = load_filtered_messages()
-
+    
+    
+    day_wise_expenses = DayWiseExpenses(stats) # loading for Barchart (Chart1)
+    file_path = "texts/all_transactions.json"  # loading for Piechart (Chart2)
+    
+    try:
+        with open(file_path, 'r') as file:
+            Piechartdata1 = flask.json.load(file)
+        print(f"Filtered messages successfully loaded from {file_path}")
+    except FileNotFoundError:
+        print(f"File not found at {file_path}")
+        return None
+    except flask.json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        return None
+    
     if not stats:  
         return flask.jsonify({'error': 'No data available'}), 404
 
@@ -524,7 +539,7 @@ def get_statistics():
 
     combined_data = {
         "barStats": day_wise_expenses,  # Data for bar chart
-        "pieStats": day_wise_expenses     # Data for pie chart
+        "pieStats": Piechartdata1     
     }
     print("CD", combined_data)
     # Return the combined data as JSON
