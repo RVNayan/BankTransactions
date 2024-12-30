@@ -351,7 +351,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=15) #needs to be fixed
+    past_week = now - timedelta(days=13) #needs to be fixed
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -519,9 +519,16 @@ def get_statistics():
 
     if not stats:  
         return flask.jsonify({'error': 'No data available'}), 404
+
     day_wise_expenses = DayWiseExpenses(stats)
-    # clear_filtered_messages()
-    return flask.jsonify(day_wise_expenses)
+
+    combined_data = {
+        "barStats": day_wise_expenses,  # Data for bar chart
+        "pieStats": day_wise_expenses     # Data for pie chart
+    }
+    print("CD", combined_data)
+    # Return the combined data as JSON
+    return flask.jsonify(combined_data)
 
 def fetch_sender_name(original_name):
     try:

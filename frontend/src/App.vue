@@ -5,7 +5,6 @@
         <v-btn @click="currentPage = 'EmailFetcher'" variant="text">
           Email Fetch
         </v-btn>
-
         <v-btn @click="fetchStatistics" variant="text">
           Statistics
         </v-btn>
@@ -16,11 +15,9 @@
       <v-container>
         <!-- Use v-show to keep both components in the DOM -->
         <EmailFetcher v-show="currentPage === 'EmailFetcher'" :messages="messages" />
-        
         <StatisticsPage
           v-show="currentPage === 'Statistics'"
           :statistics="statistics"
-          :newChartData="newChartData" 
           :key="statistics ? statistics.id : 'default'"/>
       </v-container>
     </v-main>
@@ -42,32 +39,25 @@ export default {
     return {
       currentPage: 'EmailFetcher',
       messages: [],
-      statistics: [],
-      newChartData: [] // Data for the new chart
+      statistics: { barStats: [], pieStats: [] } // Ensure this matches the expected format
     };
   },
   methods: {
     fetchEmails() {
+      // Simulate fetching data
       this.messages = [/* fetched messages here */];
     },
     fetchStatistics() {
       this.currentPage = 'Statistics';
 
-      axios.get('http://localhost:8080/statistics')
+      // Axios request to backend for statistics
+      axios
+        .get('http://localhost:8080/statistics')
         .then(response => {
-          this.statistics = response.data;
+          this.statistics = response.data; // Assign fetched data
         })
         .catch(error => {
           console.error('Error fetching statistics:', error);
-        });
-
-      // Fetch new chart data from another endpoint
-      axios.get('http://localhost:8080/new-chart-data') // New API endpoint
-        .then(response => {
-          this.newChartData = response.data; // Update newChartData
-        })
-        .catch(error => {
-          console.error('Error fetching new chart data:', error);
         });
     }
   },

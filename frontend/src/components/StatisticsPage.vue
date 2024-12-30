@@ -14,7 +14,8 @@
 </template>
 
 <script>
-import { defineComponent, watch } from 'vue';
+import { defineComponent } from 'vue';
+import axios from 'axios';
 import Chart from 'chart.js/auto';
 
 export default defineComponent({
@@ -25,19 +26,28 @@ export default defineComponent({
       required: true,
     },
   },
+  data() {
+    return {
+      barstats: null, // Data for the bar chart
+      pieStats: null, // Data for the pie chart
+    };
+  },
   watch: {
+    // Watch for changes in the statistics prop
     statistics(newStats) {
       if (newStats) {
-        this.createBarChart(newStats); // For the bar chart
-        this.createPieChart(newStats); // For the pie chart
+        this.barstats = newStats.barStats;  // Update barStats
+        this.pieStats = newStats.pieStats;  // Update pieStats
+        this.createBarChart(this.barstats); // Re-create the bar chart
+        this.createPieChart(this.pieStats); // Re-create the pie chart
       }
-    }
+    },
   },
   methods: {
     createBarChart(statistics) {
       const labels = Object.keys(statistics).map(date => {
         const [day, month] = date.split(' ');
-        const monthIndex = new Date(Date.parse(month +" 1, 2021")).getMonth(); // Convert month name to month index
+        const monthIndex = new Date(Date.parse(month + " 1, 2021")).getMonth(); // Convert month name to month index
         return new Date(2021, monthIndex, parseInt(day)); // Reconstruct the full date as a Date object
       });
 
@@ -147,9 +157,7 @@ export default defineComponent({
         },
       });
     },
-
     createPieChart(statistics) {
-      // Example pie chart data for PieChart1
       const labels = Object.keys(statistics);
       const data = labels.map(label => statistics[label]);
 
@@ -161,10 +169,10 @@ export default defineComponent({
       this.pieChart = new Chart(ctx, {
         type: "pie",
         data: {
-          labels: labels,  // The labels could be days, categories, etc.
+          labels: labels,
           datasets: [{
             label: "Expense Distribution",
-            data: data,  // The corresponding values
+            data: data,
             backgroundColor: ["#42A5F5", "#FF7043", "#66BB6A", "#FFEB3B"],
             hoverOffset: 4,
           }],
@@ -188,11 +196,19 @@ export default defineComponent({
       });
     },
   },
+  mounted() {
+    // This will be triggered when statistics are passed as a prop
+    if (this.statistics) {
+      this.barstats = this.statistics.barStats;
+      this.pieStats = this.statistics.pieStats;
+      this.createBarChart(this.barstats);
+      this.createPieChart(this.pieStats);
+    }
+  },
 });
 </script>
 
 <style scoped>
-/* Styling for the statistics page */
 .StatisticsPage {
   padding: 20px;
   text-align: center;
@@ -203,12 +219,12 @@ h1 {
 }
 
 .chart-container {
-  width: 80%;  /* Set the width of the chart container */
-  height: 300px;  /* Set the height of the chart */
+  width: 80%;
+  height: 300px;
   margin: 20px auto;
-  border: 2px solid #1E88E5;  /* Border around the chart */
-  border-radius: 10px;  /* Rounded corners for the box */
+  border: 2px solid #1E88E5;
+  border-radius: 10px;
   padding: 20px;
-  background-color: #f9f9f9;  /* Light background color */
+  background-color: #f9f9f9;
 }
 </style>
