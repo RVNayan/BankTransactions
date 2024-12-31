@@ -1,25 +1,25 @@
 <template>
   <div class="StatisticsPage">
     <h1>Statistics Page</h1>
-    <p>Chart 1 (Bar Chart)</p>
-    <div class="chart-container">
-      <canvas id="expensesChart"></canvas>
-    </div>
-    
-    <p>Chart 2 (Pie Chart)</p>
-    <div class="chart-container">
-      <canvas id="PieChart1"></canvas>
+    <div class="charts">
+      <div class="chart-container">
+        <h3>Bar Chart - Day-Wise Expenses</h3>
+        <canvas id="expensesChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>Pie Chart - Expense Distribution</h3>
+        <canvas id="PieChart1"></canvas>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { defineComponent } from 'vue';
-import axios from 'axios';
-import Chart from 'chart.js/auto';
+import { defineComponent } from "vue";
+import Chart from "chart.js/auto";
 
 export default defineComponent({
-  name: 'StatisticsPage',
+  name: "StatisticsPage",
   props: {
     statistics: {
       type: Object,
@@ -28,37 +28,22 @@ export default defineComponent({
   },
   data() {
     return {
-      barstats: null, // Data for the bar chart
-      pieStats: null, // Data for the pie chart
+      barChart: null,
+      pieChart: null,
     };
   },
   watch: {
-    // Watch for changes in the statistics prop
     statistics(newStats) {
       if (newStats) {
-        this.barstats = newStats.barStats;  // Update barStats
-        this.pieStats = newStats.pieStats;  // Update pieStats
-        this.createBarChart(this.barstats); // Re-create the bar chart
-        this.createPieChart(this.pieStats); // Re-create the pie chart
+        this.createBarChart(newStats.barStats);
+        this.createPieChart(newStats.pieStats);
       }
     },
   },
   methods: {
     createBarChart(statistics) {
-      const labels = Object.keys(statistics).map(date => {
-        const [day, month] = date.split(' ');
-        const monthIndex = new Date(Date.parse(month + " 1, 2021")).getMonth(); // Convert month name to month index
-        return new Date(2021, monthIndex, parseInt(day)); // Reconstruct the full date as a Date object
-      });
-
-      labels.sort((a, b) => a - b); // Sort by date
-
-      const sortedLabels = labels.map(date => {
-        const options = { day: '2-digit', month: 'short' };
-        return date.toLocaleDateString('en-GB', options); // Format as 'DD MMM'
-      });
-
-      const data = sortedLabels.map(label => statistics[label]);
+      const labels = Object.keys(statistics).sort();
+      const data = labels.map(label => statistics[label]);
 
       if (this.barChart) {
         this.barChart.destroy();
@@ -68,7 +53,7 @@ export default defineComponent({
       this.barChart = new Chart(ctx, {
         type: "bar",
         data: {
-          labels: sortedLabels,
+          labels,
           datasets: [
             {
               label: "Total Expenses",
@@ -82,131 +67,56 @@ export default defineComponent({
         options: {
           responsive: true,
           plugins: {
-            legend: {
-              position: "top",
-              labels: {
-                font: {
-                  family: "Arial, sans-serif",
-                  size: 14,
-                  weight: "bold",
-                },
-              },
+            legend: { position: "top" },
+            title: { display: true, text: "Day-Wise Expenses" },
+          },
+        },
+      });
+    },
+    createPieChart(statistics) {
+      const filteredData = statistics.filter(item => parseFloat(item.sent) > 0);
+      const labels = filteredData.map(item => item.updated_name);
+      const data = filteredData.map(item => parseFloat(item.sent));
+      const colors = filteredData.map(
+        (_, index) => `hsl(${(index * 360) / filteredData.length}, 70%, 60%)`
+      );
+
+      if (this.pieChart) {
+        this.pieChart.destroy();
+      }
+
+      const ctx = document.getElementById("PieChart1").getContext("2d");
+      this.pieChart = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Expense Distribution",
+              data,
+              backgroundColor: colors,
+              hoverOffset: 4,
             },
-            title: {
-              display: true,
-              text: "Day-Wise Expenses",
-              font: {
-                family: "Arial, sans-serif",
-                size: 18,
-                weight: "bold",
-              },
-              color: "#333",
-            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "top" },
             tooltip: {
               callbacks: {
-                label: function (context) {
-                  const value = context.raw;
-                  return `₹${value.toFixed(2)}`;
-                },
-              },
-              backgroundColor: "rgba(66, 165, 245, 0.8)",
-              titleFont: {
-                family: "Arial, sans-serif",
-                size: 14,
-                weight: "bold",
-              },
-              bodyFont: {
-                family: "Arial, sans-serif",
-                size: 12,
-              },
-            },
-          },
-          scales: {
-            x: {
-              ticks: {
-                font: {
-                  family: "Arial, sans-serif",
-                  size: 12,
-                },
-                color: "#333",
-              },
-            },
-            y: {
-              ticks: {
-                callback: function (value) {
-                  return `₹${value}`;
-                },
-                font: {
-                  family: "Arial, sans-serif",
-                  size: 12,
-                },
-                color: "#333",
-              },
-              title: {
-                display: true,
-                text: "Amount (₹)",
-                font: {
-                  family: "Arial, sans-serif",
-                  size: 14,
-                  weight: "bold",
-                },
-                color: "#333",
+                label: context => `₹${context.raw.toFixed(2)}`,
               },
             },
           },
         },
       });
     },
-    createPieChart(statistics) {
-  // Filter out entries where the 'sent' amount is 0
-  const filteredData = statistics.filter(item => parseFloat(item.sent) > 0);
-
-  // Get the names and corresponding sent amounts for the chart
-  const labels = filteredData.map(item => item.updated_name);
-  const data = filteredData.map(item => parseFloat(item.sent));
-
-  if (this.pieChart) {
-    this.pieChart.destroy();
-  }
-
-  const ctx = document.getElementById("PieChart1").getContext("2d");
-  this.pieChart = new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "Expense Distribution",
-        data: data,
-        backgroundColor: ["#42A5F5", "#FF7043", "#66BB6A", "#FFEB3B"],
-        hoverOffset: 4,
-      }],
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: "top",
-        },
-        tooltip: {
-          callbacks: {
-            label: function (context) {
-              const value = context.raw;
-              return `₹${value.toFixed(2)}`;
-            },
-          },
-        },
-      },
-    },
-  });
-},
   },
   mounted() {
-    // This will be triggered when statistics are passed as a prop
     if (this.statistics) {
-      this.barstats = this.statistics.barStats;
-      this.pieStats = this.statistics.pieStats;
-      this.createBarChart(this.barstats);
-      this.createPieChart(this.pieStats);
+      this.createBarChart(this.statistics.barStats);
+      this.createPieChart(this.statistics.pieStats);
     }
   },
 });
@@ -222,13 +132,25 @@ h1 {
   margin-bottom: 20px;
 }
 
+.charts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
 .chart-container {
-  width: 80%;
-  height: 300px;
-  margin: 20px auto;
+  flex: 1 1 45%; /* Adjusts to 50% of the available space */
+  max-width: 600px;
+  min-width: 300px;
+  padding: 20px;
   border: 2px solid #1E88E5;
   border-radius: 10px;
-  padding: 20px;
   background-color: #f9f9f9;
+}
+
+.chart-container h3 {
+  margin-bottom: 10px;
+  color: #1E88E5;
 }
 </style>

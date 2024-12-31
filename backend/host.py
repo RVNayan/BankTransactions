@@ -351,7 +351,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=15) #needs to be fixed
+    past_week = now - timedelta(days=5) # Change Days in the Backend!
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -389,7 +389,7 @@ def fetch_emails():
             filtered_messages.append(unitdata)  # Individual Transaction Data / Use for previous Stats
             # Write data to Google Sheets
             # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
-    
+
     save_filtered_messages(filtered_messages)
         
     flask.session['credentials'] = credentials_to_dict(credentials)
@@ -467,6 +467,7 @@ def fetch_transaction_data():
 
         # Format the data into a list of dictionaries
         transactions = [{'updated_name': row[0], 'sent': row[1], 'reci': row[2]} for row in rows]
+
         return flask.jsonify(transactions)
     except Exception as e:
         return flask.jsonify({'error': str(e)})
@@ -493,14 +494,14 @@ def fetch_stats():
         transactions = [{'updated_name': row[0], 'sent': row[1], 'reci': row[2]} for row in rows]
         T_sent, T_reci, Highest_sender = Total_amount(transactions) #from stats.py
         
-        file_path = "texts/all_transactions.json"
+        # file_path = "texts/all_transactions.json"
     
-        try:
-            with open(file_path, 'w') as file:
-                flask.json.dump(transactions, file, indent=4) 
-            print(f"Filtered messages successfully saved to {file_path}")
-        except Exception as e:
-            print(f"Error writing to file: {e}")
+        # try:
+        #     with open(file_path, 'w') as file:
+        #         flask.json.dump(transactions, file, indent=4) 
+        #     print(f"Filtered messages successfully saved to {file_path}")
+        # except Exception as e:
+        #     print(f"Error writing to file: {e}")
             
         
         Stats = [{'Total_amount_sent':T_sent, 'Total_amount_reci':T_reci, 'Largest_sender':Highest_sender}]
@@ -515,25 +516,16 @@ def fetch_stats():
 @app.route('/statistics', methods=['GET'])
 def get_statistics():
     # Load filtered messages from the JSON file
-    stats = load_filtered_messages()
+    stats = load_filtered_messages() 
     
     
     day_wise_expenses = DayWiseExpenses(stats) # loading for Barchart (Chart1)
-    file_path = "texts/all_transactions.json"  # loading for Piechart (Chart2)
-    
-    try:
-        with open(file_path, 'r') as file:
-            Piechartdata1 = flask.json.load(file)
-        print(f"Filtered messages successfully loaded from {file_path}")
-    except FileNotFoundError:
-        print(f"File not found at {file_path}")
-        return None
-    except flask.json.JSONDecodeError as e:
-        print(f"Error decoding JSON: {e}")
-        return None
-    
-    if not stats:  
-        return flask.jsonify({'error': 'No data available'}), 404
+
+    response = fetch_transaction_data()         # Using Prexisting Data For Pie Chart Instead of Storing in json
+    if isinstance(response, flask.Response):
+        Piechartdata1 = response.get_json()  
+    else:
+        Piechartdata1 = flask.json.loads(response)
 
     day_wise_expenses = DayWiseExpenses(stats)
 
@@ -541,7 +533,6 @@ def get_statistics():
         "barStats": day_wise_expenses,  # Data for bar chart
         "pieStats": Piechartdata1     
     }
-    print("CD", combined_data)
     # Return the combined data as JSON
     return flask.jsonify(combined_data)
 
