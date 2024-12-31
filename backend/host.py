@@ -351,49 +351,58 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=5) # Change Days in the Backend!
+    past_week = now - timedelta(days=140)  # Change Days in the Backend!
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
     results = service.users().messages().list(userId='me', q=f"from:{target_sender} after:{past_week_str}").execute()
-    messages = results.get('messages', [])
 
-    if not messages:
-        return flask.jsonify({'error': 'No messages found in the past week.'})
+    while results:
+        messages = results.get('messages', [])
 
-    for index, message in enumerate(messages):
-        msg = service.users().messages().get(userId='me', id=message['id']).execute()
-        headers = msg['payload']['headers']
-        sender_found = any(header['name'] == 'From' and target_sender in header['value'] for header in headers)
+        if not messages:
+            return flask.jsonify({'error': 'No messages found in the past week.'})
 
-        if sender_found:
-            # Initialize variable to accumulate message content
-            full_message = ""
+        for index, message in enumerate(messages):
+            msg = service.users().messages().get(userId='me', id=message['id']).execute()
+            headers = msg['payload']['headers']
+            sender_found = any(header['name'] == 'From' and target_sender in header['value'] for header in headers)
 
-            # Iterate through parts to accumulate content
-            for part in msg['payload']['parts']:
-                if 'data' in part['body']:
-                    raw_data = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8', 'ignore')
-                    full_message += raw_data + "\n"  # Append each part's content
-            
-            DAT = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
-            data = extracter(full_message + DAT)
+            if sender_found:
+                # Initialize variable to accumulate message content
+                full_message = ""
 
-            # Check the database for the sender name
-            updated_name = fetch_sender_name(data[2])  # Fetch the updated name
-            store_sent_rect(updated_name, data[1], data[4]) # Store the amount Sent/Recieved for the given time duration
-            store_sender_name(data[2], updated_name)  # Store the sender name in the database
-            
-                   
-            unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": updated_name, "Time": data[3], "IsDebited": data[4], "OriginalName": data[2]}
-            filtered_messages.append(unitdata)  # Individual Transaction Data / Use for previous Stats
-            # Write data to Google Sheets
-            # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
+                # Iterate through parts to accumulate content
+                for part in msg['payload']['parts']:
+                    if 'data' in part['body']:
+                        raw_data = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8', 'ignore')
+                        full_message += raw_data + "\n"  # Append each part's content
+                
+                DAT = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
+                data = extracter(full_message + DAT)
+
+                # Check the database for the sender name
+                updated_name = fetch_sender_name(data[2])  # Fetch the updated name
+                store_sent_rect(updated_name, data[1], data[4])  # Store the amount Sent/Recieved for the given time duration
+                store_sender_name(data[2], updated_name)  # Store the sender name in the database
+
+                unitdata = {"Date of Payment": data[0], "Amount": data[1], "Receiver": updated_name, "Time": data[3], "IsDebited": data[4], "OriginalName": data[2]}
+                filtered_messages.append(unitdata)  # Individual Transaction Data / Use for previous Stats
+                # Write data to Google Sheets
+                # write_to_sheets(data, sheet_id, range_name, sheet_SCOPES, SERVICE_ACCOUNT_FILE)
+
+        # Check if there are more pages
+        if 'nextPageToken' in results:
+            page_token = results['nextPageToken']
+            results = service.users().messages().list(userId='me', q=f"from:{target_sender} after:{past_week_str}", pageToken=page_token).execute()
+        else:
+            break  # Exit loop if no more pages
 
     save_filtered_messages(filtered_messages)
         
     flask.session['credentials'] = credentials_to_dict(credentials)
     return flask.jsonify({'messages': filtered_messages})
+
 
 
 @app.route('/update_name', methods=['POST'])

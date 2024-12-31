@@ -41,7 +41,6 @@ def DayWiseExpenses(rawdata):
     sorted_dates = sorted(Date.keys(), key=lambda x: datetime.strptime(x, '%d %b'))
     sorted_date_amounts = {date: Date[date] for date in sorted_dates}
 
-    print("Sorted Date:", sorted_date_amounts)
     return sorted_date_amounts
 
 #Pie Chart Data
