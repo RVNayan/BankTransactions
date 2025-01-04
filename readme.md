@@ -4,6 +4,9 @@ View your complete UPI transaction history with just a single click! This tool p
 
 ![Transaction Viewer Demo](img/Transactions.png)
 
+## Interactive Stats
+
+![Stats](img/Stats.png)
 ## Tools
 
 - **Frontend**: Vue.js, Vuetify
