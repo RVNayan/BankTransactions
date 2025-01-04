@@ -341,7 +341,7 @@ def fetch_emails():
         return flask.redirect('authorize')
 
     credentials = google.oauth2.credentials.Credentials(
-        **flask.session['credentials'])
+        **flask.session['credentials']) # creds
 
     service = googleapiclient.discovery.build(
         'gmail', 'v1', credentials=credentials)
