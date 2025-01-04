@@ -4,7 +4,7 @@ Easily track and manage your UPI transaction history with a single click! Our to
 
 ---
 
-![Transaction Viewer Demo](img/Transactions.png)
+![Transaction Viewer Demo](img/Transaction2.png)
 
 ---
 
