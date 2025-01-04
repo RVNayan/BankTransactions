@@ -1,0 +1,27 @@
+# Use Ubuntu slim version as the base image
+FROM ubuntu:20.04
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    postgresql-client \
+    python3 \
+    python3-pip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Copy the backend files into the container
+COPY . /app 
+COPY backend/requirements.txt /app/requirements.txt
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Expose port for the backend
+EXPOSE 5000
+
+# Command to run the backend
+CMD ["python3", "host.py"]

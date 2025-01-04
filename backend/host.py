@@ -351,7 +351,7 @@ def fetch_emails():
 
     # Calculate the date range for searching
     now = datetime.utcnow()
-    past_week = now - timedelta(days=140)  # Change Days in the Backend!
+    past_week = now - timedelta(days=7)  # Change Days in the Backend!
     past_week_str = past_week.strftime("%Y/%m/%d")
 
     # Retrieve all messages from the past week
@@ -543,6 +543,7 @@ def get_statistics():
         "pieStats": Piechartdata1     
     }
     # Return the combined data as JSON
+    print("Piechart", Piechartdata1)
     return flask.jsonify(combined_data)
 
 def fetch_sender_name(original_name):

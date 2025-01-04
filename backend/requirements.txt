@@ -1,0 +1,11 @@
+Flask
+flask-cors
+psycopg2-binary
+python-decouple
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+numpy
+pandas
+python-dotenv

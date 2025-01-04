@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.frontend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend:/app  # Mount the local frontend directory to the container
+    depends_on:
+      - backend
+    networks:
+      - webpay_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app  # Mount the local backend directory to the container
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=webpay
+      - DB_USER=webpayuser
+      - DB_PASSWORD=yourpassword
+    depends_on:
+      - postgres
+    networks:
+      - webpay_network
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: webpay
+      POSTGRES_USER: webpayuser
+      POSTGRES_PASSWORD: yourpassword
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Persistent storage for PostgreSQL data
+    networks:
+      - webpay_network
+
+networks:
+  webpay_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local  # This will ensure PostgreSQL data persists even if the container is stopped or removed
