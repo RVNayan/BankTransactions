@@ -133,7 +133,7 @@ export default {
                     credentials: 'include',
                 });
                 const data = await response.json();
- 
+                
                 this.transactions = data; // Store fetched transactions
 
                 

@@ -24,18 +24,19 @@ def DayWiseExpenses(rawdata):
     Date = {}  # Dictionary to store total amounts per date
     
     for i in rawdata:
-        date_key = i['Date of Payment']  # Extract the date
-        amount = float(i['Amount'])  # Ensure the amount is numeric
-        
-        # Standardize date format to "DD MMM"
-        date_obj = datetime.strptime(date_key, '%d %b')  # Convert to datetime object
-        formatted_date = date_obj.strftime('%d %b')  # Format as "DD MMM"
-        
-        # Update the total for the date
-        if formatted_date not in Date:
-            Date[formatted_date] = amount
-        else:
-            Date[formatted_date] += amount
+        if i['Amount'] != 'Amount not found':
+            date_key = i['Date of Payment']  # Extract the date
+            amount = float(i['Amount'])  # Ensure the amount is numeric
+            
+            # Standardize date format to "DD MMM"
+            date_obj = datetime.strptime(date_key, '%d %b')  # Convert to datetime object
+            formatted_date = date_obj.strftime('%d %b')  # Format as "DD MMM"
+            
+            # Update the total for the date
+            if formatted_date not in Date:
+                Date[formatted_date] = amount
+            else:
+                Date[formatted_date] += amount
     
     # Sort the dictionary by date
     sorted_dates = sorted(Date.keys(), key=lambda x: datetime.strptime(x, '%d %b'))
