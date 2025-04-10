@@ -7,3 +7,4 @@ backend/client_secret.json
 backend/service_acc.json
 texts/all_transactions.json
 texts/filtered_messages.json
+backend/__pycache__/*
