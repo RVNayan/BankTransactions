@@ -46,7 +46,18 @@ export default defineComponent({
       // Ensure statistics is a valid object and contains necessary data
       if (!statistics || Object.keys(statistics).length === 0) return;
 
-      const labels = Object.keys(statistics).sort();
+      const parseDate = (label) => {
+      const [day, month] = label.split(" ");
+      const months = {
+        Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+        Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+      };
+      return new Date(0,months[month], parseInt(day));
+    };
+
+      const labels = Object.keys(statistics).sort((a, b) => {
+      return parseDate(a) - parseDate(b);
+    });
       const data = labels.map(label => statistics[label]);
 
       if (this.barChart) {

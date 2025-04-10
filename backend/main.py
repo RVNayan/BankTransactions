@@ -7,7 +7,7 @@ SERVICE_ACCOUNT_FILE = 'service_acc.json'
 
 # Function to extract data from email message
 def extracter(email_message):
-    date_pattern = r"(\d{1,2} [A-Za-z]{3}) 20\d{2}"  #change Year
+    date_pattern = r"(\d{1,2} [A-Za-z]{3}) 20\d{2}"  # change Year
     amount_pattern = r"Rs\. ?([\d,]+\.\d{2})"
     receiver_pattern = r"VPA (\S+)"
     time_pattern = r"\b([01]?[0-9]|2[0-3]):[0-5][0-9]\b"
@@ -26,7 +26,7 @@ def extracter(email_message):
     debited = bool(re.search("debited", email_message))
 
     
-    return [date_of_payment, amount, receiver, time_of_payment,debited] #Debited to check if its recieved or sent
+    return [date_of_payment, amount, receiver, time_of_payment,debited] # Debited to check if its recieved or sent
 
 def find_first_empty_cell(service, sheet_id, range_name):
     result = service.spreadsheets().values().get(
